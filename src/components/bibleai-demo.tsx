@@ -343,21 +343,30 @@ export function BibleAiDemo({
                     {/* Cold start */}
                     {cold && (
                       <motion.div
-                        className="rounded-2xl rounded-bl-md bg-white/10 p-5"
-                        initial={{ opacity: 0, y: 6 }}
+                        className="flex items-center gap-2.5 rounded-2xl rounded-bl-md bg-white/5 px-4 py-3"
+                        initial={{ opacity: 0, y: 4 }}
                         animate={{ opacity: 1, y: 0 }}
                       >
-                        <p className="font-medium">Model is loading</p>
-                        <p className="mt-1 text-sm text-white/70">
-                          {modelName} runs on a serverless GPU that scales to zero when idle. First request takes about 60 seconds to load the model. Hit retry and it should be ready.
-                        </p>
-                        <button
-                          onClick={() => { setCold(false); send(prompt); }}
-                          className="mt-3 flex items-center gap-1.5 rounded-full border border-white/15 px-4 py-1.5 text-sm transition-colors hover:border-white/30 hover:text-white"
-                        >
-                          <RotateCcw className="size-3.5" />
-                          Retry
-                        </button>
+                        {loading ? (
+                          <>
+                            <Loader2 className="size-3.5 animate-spin text-white/50 shrink-0" />
+                            <span className="text-sm text-white/60">
+                              Waking up the GPU — takes about 60 seconds on first request
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-sm text-white/60">
+                              Still loading.
+                            </span>
+                            <button
+                              onClick={() => { setCold(false); retryCountRef.current = 0; send(prompt); }}
+                              className="text-sm text-white/80 underline underline-offset-2 hover:text-white"
+                            >
+                              Retry
+                            </button>
+                          </>
+                        )}
                       </motion.div>
                     )}
 
@@ -372,45 +381,15 @@ export function BibleAiDemo({
                       </motion.div>
                     )}
 
-                    {/* Loading — how it works */}
+                    {/* Loading spinner */}
                     {loading && !cold && (
                       <motion.div
-                        className="flex flex-col gap-5"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
+                        className="flex items-center gap-2.5 rounded-2xl rounded-bl-md bg-white/5 px-4 py-3"
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
                       >
-                        {/* Spinner */}
-                        <div className="flex items-center gap-2.5 rounded-2xl rounded-bl-md bg-white/10 px-5 py-3.5">
-                          <Loader2 className="size-4 animate-spin text-purple-400" />
-                          <span className="text-sm text-white/70">{modelName} is generating a response...</span>
-                        </div>
-
-                        {/* How it works — only on first/cold request */}
-                        {!hasResponded && howItWorks && <motion.div
-                          className="rounded-xl border border-white/15/50 p-5"
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 1.5 }}
-                        >
-                          <p className="text-xs font-medium uppercase tracking-wider text-white/60">How this works</p>
-                          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                            {howItWorks.map((item, i) => (
-                              <motion.div
-                                key={item.title}
-                                className="flex gap-3"
-                                initial={{ opacity: 0, y: 4 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 2 + i * 0.15 }}
-                              >
-                                <div className="mt-0.5 shrink-0">{item.icon}</div>
-                                <div>
-                                  <p className="text-xs font-medium">{item.title}</p>
-                                  <p className="mt-0.5 text-[11px] leading-relaxed text-white/60">{item.desc}</p>
-                                </div>
-                              </motion.div>
-                            ))}
-                          </div>
-                        </motion.div>}
+                        <Loader2 className="size-3.5 animate-spin text-white/50 shrink-0" />
+                        <span className="text-sm text-white/60">Generating response...</span>
                       </motion.div>
                     )}
 
