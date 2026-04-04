@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title: "Robert Courson | Designer turned developer",
   description:
     "Full-stack developer with a design background and AI specialty. Fine-tuned LLMs, RAG pipelines, production apps end-to-end.",
-  metadataBase: new URL("https://robcourson.com"),
+  metadataBase: new URL(process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "https://robcourson.vercel.app"),
 };
 
 export default function RootLayout({
