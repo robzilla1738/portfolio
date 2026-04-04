@@ -56,6 +56,7 @@ export function BibleAiDemo({
   const retryCountRef = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const responseRef = useRef<HTMLDivElement>(null);
+  const thinkingRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 300);
@@ -65,7 +66,16 @@ export function BibleAiDemo({
     if (responseRef.current) {
       responseRef.current.scrollTop = responseRef.current.scrollHeight;
     }
-  }, [response, thinkingText]);
+  }, [response]);
+
+  useEffect(() => {
+    if (thinkingRef.current) {
+      thinkingRef.current.scrollTop = thinkingRef.current.scrollHeight;
+    }
+    if (responseRef.current) {
+      responseRef.current.scrollTop = responseRef.current.scrollHeight;
+    }
+  }, [thinkingText]);
 
   useEffect(() => {
     if (open) {
@@ -420,7 +430,10 @@ export function BibleAiDemo({
                           <span className="text-xs text-white/50">Thinking...</span>
                         </div>
                         {thinkingText && (
-                          <p className="mt-2 text-xs leading-relaxed text-white/30 max-h-40 overflow-y-auto whitespace-pre-wrap">
+                          <p
+                            ref={thinkingRef}
+                            className="scrollbar-none mt-2 text-xs leading-relaxed text-white/30 max-h-40 overflow-y-auto whitespace-pre-wrap"
+                          >
                             {thinkingText}
                           </p>
                         )}
@@ -454,7 +467,9 @@ export function BibleAiDemo({
                               transition={{ duration: 0.2 }}
                               className="overflow-hidden"
                             >
-                              <p className="px-4 pb-3 text-xs leading-relaxed text-white/30 max-h-60 overflow-y-auto whitespace-pre-wrap">
+                              <p
+                                className="scrollbar-none px-4 pb-3 text-xs leading-relaxed text-white/30 max-h-60 overflow-y-auto whitespace-pre-wrap"
+                              >
                                 {thinkingText}
                               </p>
                             </motion.div>
@@ -466,11 +481,11 @@ export function BibleAiDemo({
                     {/* Response */}
                     {response && (
                       <motion.div
-                        className="flex justify-start"
+                        className={`flex justify-start ${thinkingDone ? "mt-3" : ""}`}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                       >
-                        <div className="w-full rounded-2xl rounded-bl-md bg-white/10 px-5 py-4 overflow-hidden break-words">
+                        <div className="w-full rounded-2xl rounded-bl-md bg-white/10 px-5 py-4 break-words">
                           <div className="chat-markdown text-sm leading-relaxed">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
                               {response}
