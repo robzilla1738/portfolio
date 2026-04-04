@@ -65,6 +65,7 @@ export async function POST(req: NextRequest) {
       temperature: 0.3,
       top_p: 0.9,
       max_tokens: 2048,
+      repetition_penalty: 1.15,
       stream: true,
     }),
     signal: AbortSignal.timeout(180000),
@@ -100,9 +101,32 @@ export async function POST(req: NextRequest) {
       let buffer = "";
       let inThinkBlock = false;
       let sentThinkingSignal = false;
-      let contentBuf = ""; // buffer to detect <think> at start
+      let contentBuf = "";
       let passedThinkCheck = false;
-      let thinkAccum = ""; // accumulate think block to find </think>
+      let thinkAccum = "";
+      // Repetition detection
+      let recentOutput = "";
+      const REP_WINDOW = 200;
+      const REP_THRESHOLD = 4;
+
+      function checkRepetition(text: string): boolean {
+        recentOutput += text;
+        if (recentOutput.length > REP_WINDOW * 2) {
+          recentOutput = recentOutput.slice(-REP_WINDOW * 2);
+        }
+        if (recentOutput.length < 40) return false;
+        // Check if any 10+ char substring repeats 4+ times
+        const chunk = recentOutput.slice(-REP_WINDOW);
+        for (let len = 10; len <= 30; len++) {
+          const pattern = chunk.slice(-len);
+          let count = 0;
+          let idx = 0;
+          while ((idx = chunk.indexOf(pattern, idx)) !== -1) { count++; idx += 1; }
+          if (count >= REP_THRESHOLD) return true;
+        }
+        return false;
+      }
+
       try {
         while (true) {
           const { done, value } = await reader.read();
@@ -128,6 +152,8 @@ export async function POST(req: NextRequest) {
                   sentThinkingSignal = true;
                   controller.enqueue(encoder.encode("\x00T"));
                 }
+                // Stream thinking content to client
+                controller.enqueue(encoder.encode(delta.reasoning_content));
                 continue;
               }
 
@@ -137,28 +163,25 @@ export async function POST(req: NextRequest) {
               // Buffer initial content to detect <think> tags
               if (!passedThinkCheck) {
                 contentBuf += content;
-                // Check if we have enough to determine
                 if (contentBuf.length >= 7 || (!contentBuf.trimStart().startsWith("<") && contentBuf.length > 1)) {
                   const trimmedBuf = contentBuf.trimStart();
                   if (trimmedBuf.startsWith("<think>")) {
-                    // Thinking model with <think> tags
                     inThinkBlock = true;
                     sentThinkingSignal = true;
                     controller.enqueue(encoder.encode("\x00T"));
-                    // Process remaining content after <think>
                     const afterTag = trimmedBuf.slice(7);
                     if (afterTag.includes("</think>")) {
                       const endIdx = afterTag.indexOf("</think>");
+                      const thinkContent = afterTag.slice(0, endIdx);
                       const realContent = afterTag.slice(endIdx + 8);
                       inThinkBlock = false;
+                      if (thinkContent) controller.enqueue(encoder.encode(thinkContent));
                       if (realContent) {
                         controller.enqueue(encoder.encode("\x00R"));
                         controller.enqueue(encoder.encode(realContent));
                       }
                     }
-                    // else still in think block, content dropped
                   } else {
-                    // No thinking — flush buffered content
                     controller.enqueue(encoder.encode(contentBuf));
                   }
                   passedThinkCheck = true;
@@ -166,31 +189,43 @@ export async function POST(req: NextRequest) {
                 continue;
               }
 
-              // After initial check — handle ongoing think blocks
+              // Handle ongoing think blocks — stream content
               if (inThinkBlock) {
-                // Accumulate and look for </think> closing tag
                 thinkAccum += content;
                 const closeIdx = thinkAccum.indexOf("</think>");
                 if (closeIdx !== -1) {
+                  const thinkContent = thinkAccum.slice(0, closeIdx);
                   const realContent = thinkAccum.slice(closeIdx + 8);
                   inThinkBlock = false;
+                  if (thinkContent) controller.enqueue(encoder.encode(thinkContent));
                   thinkAccum = "";
                   controller.enqueue(encoder.encode("\x00R"));
                   if (realContent) {
                     controller.enqueue(encoder.encode(realContent));
                   }
+                } else {
+                  // Stream thinking content as it arrives
+                  if (thinkAccum.length > 8) {
+                    const safe = thinkAccum.slice(0, -8); // keep last 8 chars in case </think> is split
+                    if (safe) controller.enqueue(encoder.encode(safe));
+                    thinkAccum = thinkAccum.slice(-8);
+                  }
                 }
                 continue;
               }
 
-              // Normal content
+              // Normal content — check for repetition
+              if (checkRepetition(content)) {
+                controller.enqueue(encoder.encode("\n\n*[Response truncated — model entered a repetition loop]*"));
+                controller.close();
+                return;
+              }
               controller.enqueue(encoder.encode(content));
             } catch {
               // skip malformed SSE lines
             }
           }
         }
-        // Flush any remaining buffered content
         if (!passedThinkCheck && contentBuf) {
           controller.enqueue(encoder.encode(contentBuf));
         }

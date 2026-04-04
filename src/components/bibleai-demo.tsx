@@ -48,6 +48,7 @@ export function BibleAiDemo({
   const [hasResponded, setHasResponded] = useState(false);
   const [error, setError] = useState("");
   const [thinking, setThinking] = useState(false);
+  const [thinkingText, setThinkingText] = useState("");
   const retryCountRef = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const responseRef = useRef<HTMLDivElement>(null);
@@ -60,7 +61,7 @@ export function BibleAiDemo({
     if (responseRef.current) {
       responseRef.current.scrollTop = responseRef.current.scrollHeight;
     }
-  }, [response]);
+  }, [response, thinkingText]);
 
   useEffect(() => {
     if (open) {
@@ -88,6 +89,7 @@ export function BibleAiDemo({
     setCold(false);
     setInputValue("");
     setThinking(false);
+    setThinkingText("");
     retryCountRef.current = 0;
     setTimeout(() => inputRef.current?.focus(), 100);
   }
@@ -149,6 +151,7 @@ export function BibleAiDemo({
 
       const decoder = new TextDecoder();
       let content = "";
+      let thinkContent = "";
       let isThinking = false;
 
       while (true) {
@@ -156,27 +159,28 @@ export function BibleAiDemo({
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
 
-        // Process chunk character by character for control signals
         for (let i = 0; i < chunk.length; i++) {
           if (chunk[i] === "\x00" && i + 1 < chunk.length) {
             const signal = chunk[i + 1];
             if (signal === "T") {
-              // Thinking started
               isThinking = true;
               setThinking(true);
-              i++; // skip signal byte
+              setThinkingText("");
+              thinkContent = "";
+              i++;
               continue;
             }
             if (signal === "R") {
-              // Real content starting
               isThinking = false;
               setThinking(false);
-              i++; // skip signal byte
+              i++;
               continue;
             }
           }
-          // Only append real content
-          if (!isThinking) {
+          if (isThinking) {
+            thinkContent += chunk[i];
+            setThinkingText(thinkContent);
+          } else {
             content += chunk[i];
             setResponse(content);
           }
@@ -396,13 +400,20 @@ export function BibleAiDemo({
                     {/* Thinking indicator */}
                     {thinking && (
                       <motion.div
-                        className="flex items-center gap-2.5 rounded-2xl rounded-bl-md bg-white/5 border border-white/10 px-5 py-3.5"
+                        className="rounded-2xl rounded-bl-md bg-white/5 border border-white/10 px-5 py-3.5"
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0 }}
                       >
-                        <Loader2 className="size-3.5 animate-spin text-white/70 shrink-0" />
-                        <span className="text-xs font-medium text-white/70">Thinking...</span>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Loader2 className="size-3 animate-spin text-white/50 shrink-0" />
+                          <span className="text-[11px] font-medium uppercase tracking-wider text-white/50">Thinking</span>
+                        </div>
+                        {thinkingText && (
+                          <p className="text-xs leading-relaxed text-white/40 max-h-32 overflow-y-auto whitespace-pre-wrap">
+                            {thinkingText}
+                          </p>
+                        )}
                       </motion.div>
                     )}
 
