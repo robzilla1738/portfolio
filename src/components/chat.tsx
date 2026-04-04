@@ -829,7 +829,16 @@ export function Chat({ hidden }: { hidden?: boolean }) {
                       {msg.role === "assistant" ? (
                         msg.content ? (
                           <div className="chat-markdown">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                a: ({ href, children }) => (
+                                  <a href={href} target="_blank" rel="noopener noreferrer">
+                                    {children}
+                                  </a>
+                                ),
+                              }}
+                            >
                               {msg.content}
                             </ReactMarkdown>
                           </div>
