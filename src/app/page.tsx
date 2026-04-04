@@ -398,9 +398,9 @@ export default function Home() {
         </motion.p>
         <motion.p className="text-muted-foreground md:text-xl leading-relaxed" {...scroll(0.16)}>
           So I learned to code. Four years later I&apos;ve shipped a cross-platform
-          app to the App Store, fine-tuned two language models, and open-sourced
-          an AI research tool. I went deep because surface-level wasn&apos;t going
-          to cut it.
+          app to the App Store, fine-tuned two language models, open-sourced
+          an AI research tool, and countless other things that never got pushed
+          to GitHub. I went deep because surface-level wasn&apos;t going to cut it.
         </motion.p>
       </section>
 
