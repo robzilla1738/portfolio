@@ -375,16 +375,16 @@ export default function Home() {
           className="max-w-[600px] text-muted-foreground md:text-xl"
           {...anim(0.1)}
         >
-          Designer turned developer. I build production apps end-to-end,
-          and I&apos;ve also fine-tuned two language models and built RAG pipelines
-          along the way. 10 years of design, 4 years of engineering.
+          Designer turned developer. I figure things out and make stuff
+          that works as good as it looks. 10 years of design, 4 years
+          writing code.
         </motion.p>
       </section>
 
       {/* About */}
-      <motion.section id="about" className="flex flex-col gap-4" {...scroll()}>
-        <h2 className="text-3xl font-bold">TL;DR</h2>
-        <p className="text-muted-foreground md:text-xl leading-relaxed">
+      <section id="about" className="flex flex-col gap-4">
+        <motion.h2 className="text-3xl font-bold" {...scroll()}>TL;DR</motion.h2>
+        <motion.p className="text-muted-foreground md:text-xl leading-relaxed" {...scroll(0.08)}>
           I ran a design agency called{" "}
           <a
             href="#experience"
@@ -395,15 +395,14 @@ export default function Home() {
           {" "}for almost a decade. Brand identity, creative direction, the
           whole thing. Good at it, but frustrated. I kept handing off work to
           developers and getting back something that missed the point.
-        </p>
-        <p className="text-muted-foreground md:text-xl leading-relaxed">
+        </motion.p>
+        <motion.p className="text-muted-foreground md:text-xl leading-relaxed" {...scroll(0.16)}>
           So I learned to code. Four years later I&apos;ve shipped a cross-platform
-          app to the App Store with 12 production integrations, fine-tuned two
-          LLMs (7B and 4.5B parameters), built RAG pipelines with vector search,
-          and open-sourced an AI research tool. I went deep because
-          surface-level wasn&apos;t going to cut it.
-        </p>
-      </motion.section>
+          app to the App Store, fine-tuned two language models, and open-sourced
+          an AI research tool. I went deep because surface-level wasn&apos;t going
+          to cut it.
+        </motion.p>
+      </section>
 
       {/* Projects */}
       <section id="work" className="flex flex-col gap-6">
@@ -436,7 +435,14 @@ export default function Home() {
             if (project.title === "BibleAI:7b") {
               const gemma = projects.find((p) => p.title === "GemmaBible:E4B");
               return (
-                <div key="model-pair" className="grid gap-6 md:grid-cols-2">
+                <motion.div
+                  key="model-pair"
+                  className="grid gap-6 md:grid-cols-2"
+                  initial={reduced ? undefined : { opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={reduced ? { duration: 0 } : { duration: 0.4 }}
+                >
                   <ProjectCard
                     project={project}
                     index={i}
@@ -475,7 +481,7 @@ export default function Home() {
                       }
                     />
                   )}
-                </div>
+                </motion.div>
               );
             }
 
@@ -504,11 +510,18 @@ export default function Home() {
       </section>
 
       {/* Skills */}
-      <motion.section className="flex flex-col gap-6" {...scroll()}>
-        <h2 className="text-3xl font-bold">Skills</h2>
+      <section className="flex flex-col gap-6">
+        <motion.h2 className="text-3xl font-bold" {...scroll()}>I&apos;ve worked with</motion.h2>
         <div className="columns-1 gap-5 sm:columns-2 lg:columns-3">
-          {SKILL_GROUPS.map((group) => (
-            <div key={group.label} className="mb-5 flex break-inside-avoid flex-col gap-2">
+          {SKILL_GROUPS.map((group, i) => (
+            <motion.div
+              key={group.label}
+              className="mb-5 flex break-inside-avoid flex-col gap-2"
+              initial={reduced ? undefined : { opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={reduced ? { duration: 0 } : { duration: 0.4, delay: i * 0.06 }}
+            >
               <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                 {group.label}
               </span>
@@ -522,10 +535,10 @@ export default function Home() {
                   </span>
                 ))}
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
-      </motion.section>
+      </section>
 
       {/* Experience */}
       <section id="experience" className="flex flex-col gap-6">
