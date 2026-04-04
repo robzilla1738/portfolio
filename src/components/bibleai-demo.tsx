@@ -377,7 +377,7 @@ export function BibleAiDemo({
                             <>
                               <Loader2 className="size-3.5 animate-spin text-white/50 shrink-0" />
                               <span className="text-sm text-white/60">
-                                Waking up the GPU — takes about 60 seconds on first request
+                                Waking up the GPU. Takes about 60 seconds on first request
                               </span>
                             </>
                           ) : (

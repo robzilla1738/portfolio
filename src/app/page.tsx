@@ -375,7 +375,7 @@ export default function Home() {
           className="max-w-[600px] text-muted-foreground md:text-xl"
           {...anim(0.1)}
         >
-          Designer turned developer. I build production apps end-to-end —
+          Designer turned developer. I build production apps end-to-end,
           and I&apos;ve also fine-tuned two language models and built RAG pipelines
           along the way. 10 years of design, 4 years of engineering.
         </motion.p>
@@ -392,7 +392,7 @@ export default function Home() {
           >
             Fieldtrip (+ more)
           </a>
-          {" "}for almost a decade — brand identity, creative direction, the
+          {" "}for almost a decade. Brand identity, creative direction, the
           whole thing. Good at it, but frustrated. I kept handing off work to
           developers and getting back something that missed the point.
         </p>
@@ -547,7 +547,7 @@ export default function Home() {
             role="Founder & Developer"
             company="Rhema"
             period="2026 – Present"
-            highlight="Full-stack Bible study platform — web and iOS from one codebase. 12 production integrations, AI-powered study canvas with OpenAI tool-calling."
+            highlight="Full-stack Bible study platform. Web and iOS from one codebase. 12 production integrations, AI-powered study canvas with OpenAI tool-calling."
             reduced={reduced}
             index={0}
           />
@@ -582,7 +582,7 @@ export default function Home() {
             company="Ejento"
             period="2020 (COVID)"
             highlight="Technical recruiting for SpaceX, Scale AI, Cruise, GitLab, Skydio. Backed by Sequoia, a16z, Google Ventures."
-            details="Augmented recruiting — worked in-house as an extension of client teams. Hired Go-To-Market, Operational, Engineering and People leaders for venture-backed startups. VC partners included Sequoia Capital, Andreessen-Horowitz, Google Ventures, First Round Capital, Accel Partners, Greylock, and more. Shut down March 2020 due to COVID-19."
+            details="Augmented recruiting, working in-house as an extension of client teams. Hired Go-To-Market, Operational, Engineering and People leaders for venture-backed startups. VC partners included Sequoia Capital, Andreessen-Horowitz, Google Ventures, First Round Capital, Accel Partners, Greylock, and more. Shut down March 2020 due to COVID-19."
             reduced={reduced}
             index={4}
           />
@@ -600,7 +600,7 @@ export default function Home() {
             company="Tempo Automation"
             period="2018 – 2020"
             highlight="Closed 42 P0/P1 roles in 2 quarters. Managed PCB production for NASA, SpaceX, Tesla, Lockheed Martin."
-            details="Solo internal recruiter for two quarters before building out the team. Worked with CEO on executive searches for VP of People, Product, Business Operations, Operations — all placed. Managed 7+ recruiting agencies and 10+ hiring managers across C/VP/Director levels. As Technical PM, managed PCB assembly production for customers in aerospace (NASA, SpaceX, Blue Origin), medical device, defense (Raytheon, Lockheed Martin), and autonomous vehicles (Tesla, Zoox). Cross-functional work with Software, Operations, Finance, Sales, Manufacturing, and Product teams."
+            details="Solo internal recruiter for two quarters before building out the team. Worked with CEO on executive searches for VP of People, Product, Business Operations, Operations, all placed. Managed 7+ recruiting agencies and 10+ hiring managers across C/VP/Director levels. As Technical PM, managed PCB assembly production for customers in aerospace (NASA, SpaceX, Blue Origin), medical device, defense (Raytheon, Lockheed Martin), and autonomous vehicles (Tesla, Zoox). Cross-functional work with Software, Operations, Finance, Sales, Manufacturing, and Product teams."
             reduced={reduced}
             index={6}
           />

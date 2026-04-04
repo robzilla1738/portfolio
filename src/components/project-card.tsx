@@ -1,7 +1,8 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
-import { Globe } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { Globe, ChevronDown } from "lucide-react";
 import Ollama from "@lobehub/icons/es/Ollama";
 import HuggingFace from "@lobehub/icons/es/HuggingFace";
 import Github from "@lobehub/icons/es/Github";
@@ -26,6 +27,7 @@ export function ProjectCard({
   extra?: React.ReactNode;
 }) {
   const reduced = useReducedMotion();
+  const [expanded, setExpanded] = useState(false);
 
   return (
     <motion.div
@@ -78,14 +80,36 @@ export function ProjectCard({
         {project.hook}
       </p>
 
-      <ul className="space-y-1 text-sm leading-relaxed text-muted-foreground">
-        {project.highlights.map((h) => (
-          <li key={h} className="flex gap-1.5">
-            <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-muted-foreground/40" />
-            {h}
-          </li>
-        ))}
-      </ul>
+      {project.highlights.length > 0 && (
+        <>
+          <AnimatePresence>
+            {expanded && (
+              <motion.ul
+                className="space-y-1 text-sm leading-relaxed text-muted-foreground"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                style={{ overflow: "hidden" }}
+              >
+                {project.highlights.map((h) => (
+                  <li key={h} className="flex gap-1.5">
+                    <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-muted-foreground/40" />
+                    {h}
+                  </li>
+                ))}
+              </motion.ul>
+            )}
+          </AnimatePresence>
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="flex items-center gap-1 text-[11px] text-muted-foreground/70 transition-colors hover:text-muted-foreground"
+          >
+            {expanded ? "Show less" : "Details"}
+            <ChevronDown className={`size-3 transition-transform ${expanded ? "rotate-180" : ""}`} />
+          </button>
+        </>
+      )}
 
       <div className="flex flex-wrap gap-1.5">
         {project.tech.map((t) => (
