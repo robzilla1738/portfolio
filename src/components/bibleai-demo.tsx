@@ -367,32 +367,60 @@ export function BibleAiDemo({
 
                     {/* Cold start */}
                     {cold && (
-                      <motion.div
-                        className="flex items-center gap-2.5 rounded-2xl rounded-bl-md bg-white/5 px-4 py-3"
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                      >
-                        {loading ? (
-                          <>
-                            <Loader2 className="size-3.5 animate-spin text-white/50 shrink-0" />
-                            <span className="text-sm text-white/60">
-                              Waking up the GPU — takes about 60 seconds on first request
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-sm text-white/60">
-                              Still loading.
-                            </span>
-                            <button
-                              onClick={() => { setCold(false); retryCountRef.current = 0; send(prompt); }}
-                              className="text-sm text-white/80 underline underline-offset-2 hover:text-white"
-                            >
-                              Retry
-                            </button>
-                          </>
+                      <div className="space-y-4">
+                        <motion.div
+                          className="flex items-center gap-2.5 rounded-2xl rounded-bl-md bg-white/5 px-4 py-3"
+                          initial={{ opacity: 0, y: 4 }}
+                          animate={{ opacity: 1, y: 0 }}
+                        >
+                          {loading ? (
+                            <>
+                              <Loader2 className="size-3.5 animate-spin text-white/50 shrink-0" />
+                              <span className="text-sm text-white/60">
+                                Waking up the GPU — takes about 60 seconds on first request
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-sm text-white/60">
+                                Still loading.
+                              </span>
+                              <button
+                                onClick={() => { setCold(false); retryCountRef.current = 0; send(prompt); }}
+                                className="text-sm text-white/80 underline underline-offset-2 hover:text-white"
+                              >
+                                Retry
+                              </button>
+                            </>
+                          )}
+                        </motion.div>
+
+                        {/* How it works cards — shown during cold start */}
+                        {howItWorks && howItWorks.length > 0 && (
+                          <motion.div
+                            className="grid gap-3"
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3 }}
+                          >
+                            {howItWorks.map((item, i) => (
+                              <motion.div
+                                key={item.title}
+                                className="flex items-start gap-3 rounded-xl bg-white/5 border border-white/8 px-4 py-3"
+                                initial={{ opacity: 0, y: 6 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.4 + i * 0.1 }}
+                              >
+                                <div className="mt-0.5 shrink-0">{item.icon}</div>
+                                <div>
+                                  <p className="text-sm font-medium text-white/80">{item.title}</p>
+                                  <p className="mt-0.5 text-xs leading-relaxed text-white/50">{item.desc}</p>
+                                </div>
+                              </motion.div>
+                            ))}
+                          </motion.div>
                         )}
-                      </motion.div>
+                      </div>
                     )}
 
                     {/* Error */}

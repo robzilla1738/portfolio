@@ -29,17 +29,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Rate limit: 10 requests per hour per IP
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  const { allowed, remaining, resetAt } = rateLimit(ip, { limit: 10, windowMs: 60 * 60 * 1000 });
-
-  if (!allowed) {
-    const minsLeft = Math.ceil((resetAt - Date.now()) / 60000);
-    return Response.json(
-      { error: `Rate limit reached. Try again in ${minsLeft} minutes.`, rateLimited: true },
-      { status: 429 }
-    );
-  }
 
   const { prompt } = await req.json();
 
@@ -72,10 +62,21 @@ export async function POST(req: NextRequest) {
     signal: AbortSignal.timeout(180000),
   });
 
+  // Cold start — don't count against rate limit
   if (res.status === 503 || res.status === 502) {
     return Response.json(
       { error: "Model is loading. Try again in a minute.", cold: true },
       { status: 202 }
+    );
+  }
+
+  // Rate limit only after confirming model is awake
+  const { allowed, resetAt } = rateLimit(ip, { limit: 10, windowMs: 60 * 60 * 1000 });
+  if (!allowed) {
+    const minsLeft = Math.ceil((resetAt - Date.now()) / 60000);
+    return Response.json(
+      { error: `Rate limit reached. Try again in ${minsLeft} minutes.`, rateLimited: true },
+      { status: 429 }
     );
   }
 
