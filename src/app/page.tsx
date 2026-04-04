@@ -506,7 +506,7 @@ export default function Home() {
       {/* Skills */}
       <motion.section className="flex flex-col gap-6" {...scroll()}>
         <h2 className="text-3xl font-bold">Skills</h2>
-        <div className="columns-2 gap-5 sm:columns-3">
+        <div className="columns-1 gap-5 sm:columns-2 lg:columns-3">
           {SKILL_GROUPS.map((group) => (
             <div key={group.label} className="mb-5 flex break-inside-avoid flex-col gap-2">
               <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">

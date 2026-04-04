@@ -182,6 +182,10 @@ export async function POST(req: NextRequest) {
                       }
                     }
                   } else {
+                    // If we were streaming thinking via reasoning_content, signal end of thinking
+                    if (sentThinkingSignal) {
+                      controller.enqueue(encoder.encode("\x00R"));
+                    }
                     controller.enqueue(encoder.encode(contentBuf));
                   }
                   passedThinkCheck = true;
