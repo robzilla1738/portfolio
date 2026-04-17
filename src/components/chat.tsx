@@ -5,64 +5,12 @@ import React, {
   useRef,
   useEffect,
   useCallback,
-  useMemo,
 } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { Send, Mic, Volume2, VolumeOff, Square } from "lucide-react";
+import { Send, Mic, Volume2, VolumeOff, Square, Loader2, X } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-
-// --- AI Orb (blue rotating glow circle) ---
-
-function AiOrb({ size = 24 }: { size?: number }) {
-  return (
-    <div
-      className="ai-orb relative rounded-full"
-      style={{ width: size, height: size }}
-    >
-      <style jsx>{`
-        @keyframes orbGlow {
-          0% {
-            transform: rotate(90deg);
-            box-shadow:
-              0 ${size * 0.033}px ${size * 0.067}px 0 #a855f7 inset,
-              0 ${size * 0.067}px ${size * 0.1}px 0 #7c3aed inset,
-              0 ${size * 0.2}px ${size * 0.2}px 0 #5b21b6 inset,
-              0 0 ${size * 0.04}px ${size * 0.015}px rgba(56, 189, 248, 0.3),
-              0 0 ${size * 0.08}px ${size * 0.02}px rgba(0, 93, 255, 0.2);
-          }
-          50% {
-            transform: rotate(270deg);
-            box-shadow:
-              0 ${size * 0.033}px ${size * 0.067}px 0 #60a5fa inset,
-              0 ${size * 0.067}px ${size * 0.033}px 0 #0284c7 inset,
-              0 ${size * 0.133}px ${size * 0.2}px 0 #7c3aed inset,
-              0 0 ${size * 0.04}px ${size * 0.015}px rgba(56, 189, 248, 0.3),
-              0 0 ${size * 0.08}px ${size * 0.02}px rgba(0, 93, 255, 0.2);
-          }
-          100% {
-            transform: rotate(450deg);
-            box-shadow:
-              0 ${size * 0.033}px ${size * 0.067}px 0 #4dc8fd inset,
-              0 ${size * 0.067}px ${size * 0.1}px 0 #7c3aed inset,
-              0 ${size * 0.2}px ${size * 0.2}px 0 #5b21b6 inset,
-              0 0 ${size * 0.04}px ${size * 0.015}px rgba(56, 189, 248, 0.3),
-              0 0 ${size * 0.08}px ${size * 0.02}px rgba(0, 93, 255, 0.2);
-          }
-        }
-        .ai-orb {
-          animation: orbGlow 4s linear infinite;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .ai-orb { animation: none; }
-        }
-      `}</style>
-    </div>
-  );
-}
-
-// --- Types ---
 
 // --- Live Waveform (scrolling bars + timer) ---
 
@@ -83,24 +31,20 @@ function LiveWaveform({ analyser, startTime }: { analyser: AnalyserNode | null; 
       rafRef.current = requestAnimationFrame(tick);
       analyser!.getByteFrequencyData(data);
 
-      // Timer
       const sec = Math.floor((Date.now() - startTime) / 1000);
       const m = Math.floor(sec / 60);
       const s = sec % 60;
       setElapsed(`${m}:${s.toString().padStart(2, "0")}`);
 
-      // Push a new bar every ~60ms
       const now = Date.now();
       if (now - lastPush.current > 60) {
         lastPush.current = now;
-        // Average the lower frequency bins for a single bar value
         let sum = 0;
         const bins = Math.min(32, data.length);
         for (let i = 0; i < bins; i++) sum += data[i];
         const avg = sum / bins / 255;
         const h = 2 + avg * 26;
         historyRef.current = [...historyRef.current, h];
-        // Keep last 200 bars
         if (historyRef.current.length > 200) historyRef.current = historyRef.current.slice(-200);
         setHistory([...historyRef.current]);
       }
@@ -112,7 +56,6 @@ function LiveWaveform({ analyser, startTime }: { analyser: AnalyserNode | null; 
     return () => cancelAnimationFrame(rafRef.current);
   }, [analyser, startTime]);
 
-  // Auto-scroll to the right
   useEffect(() => {
     if (containerRef.current) {
       containerRef.current.scrollLeft = containerRef.current.scrollWidth;
@@ -129,7 +72,7 @@ function LiveWaveform({ analyser, startTime }: { analyser: AnalyserNode | null; 
         {history.map((h, i) => (
           <div
             key={i}
-            className="w-[2.5px] shrink-0 rounded-full bg-white/70"
+            className="w-[2.5px] shrink-0 rounded-full bg-foreground/70"
             style={{ height: `${h}px` }}
           />
         ))}
@@ -147,7 +90,7 @@ function PlaybackWaveform() {
       {Array.from({ length: bars }).map((_, i) => (
         <motion.div
           key={i}
-          className="w-[2px] rounded-full bg-white/60"
+          className="w-[2px] rounded-full bg-foreground/60"
           animate={{
             height: ["4px", `${8 + Math.random() * 16}px`, "4px"],
           }}
@@ -188,8 +131,21 @@ const PILL_H = 44;
 
 // --- Chat Component ---
 
-export function Chat({ hidden }: { hidden?: boolean }) {
-  const [open, setOpen] = useState(false);
+export function Chat({
+  open: controlledOpen,
+  onOpenChange,
+  hidden,
+}: {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hidden?: boolean;
+}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = (v: boolean) => {
+    if (onOpenChange) onOpenChange(v);
+    if (controlledOpen === undefined) setInternalOpen(v);
+  };
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -200,6 +156,7 @@ export function Chat({ hidden }: { hidden?: boolean }) {
   const [ttsEnabled, setTtsEnabled] = useState(true);
   const [speaking, setSpeaking] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const desktopAsideRef = useRef<HTMLElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -212,7 +169,6 @@ export function Chat({ hidden }: { hidden?: boolean }) {
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
 
-  // Only auto-scroll when user sends a message, not during streaming
   const shouldScrollRef = useRef(false);
 
   const scrollToBottom = useCallback(() => {
@@ -230,7 +186,6 @@ export function Chat({ hidden }: { hidden?: boolean }) {
     if (open) setTimeout(() => inputRef.current?.focus(), 400);
   }, [open]);
 
-  // Cleanup everything on unmount
   useEffect(() => {
     return () => {
       responseDoneRef.current = true;
@@ -247,9 +202,13 @@ export function Chat({ hidden }: { hidden?: boolean }) {
 
   useEffect(() => {
     function handler(e: MouseEvent) {
-      if (open && wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-        close();
-      }
+      if (!open) return;
+      const target = e.target as Node;
+      if (wrapperRef.current?.contains(target)) return;
+      if (desktopAsideRef.current?.contains(target)) return;
+      // Ignore clicks on any element marked as a chat opener
+      if ((e.target as Element)?.closest?.("[data-chat-opener]")) return;
+      close();
     }
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -258,8 +217,6 @@ export function Chat({ hidden }: { hidden?: boolean }) {
   function close() {
     stopRecording();
     stopAudio();
-    // Kill WebSocket completely — null out handlers before closing
-    // so no events fire during or after close
     responseDoneRef.current = true;
     if (wsRef.current) {
       wsRef.current.onmessage = null;
@@ -326,7 +283,6 @@ export function Chat({ hidden }: { hidden?: boolean }) {
   function playPcm16(chunks: Int16Array[]) {
     if (chunks.length === 0 || !openRef.current) return;
 
-    // Stop any existing PCM playback first
     if (pcmCtxRef.current) {
       pcmCtxRef.current.close().catch(() => {});
       pcmCtxRef.current = null;
@@ -362,7 +318,6 @@ export function Chat({ hidden }: { hidden?: boolean }) {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 24000 } });
       streamRef.current = stream;
 
-      // Analyser for waveform
       const ctx = new AudioContext({ sampleRate: 24000 });
       audioCtxRef.current = ctx;
       const source = ctx.createMediaStreamSource(stream);
@@ -371,7 +326,6 @@ export function Chat({ hidden }: { hidden?: boolean }) {
       source.connect(node);
       setAnalyser(node);
 
-      // PCM capture for realtime API
       const processor = ctx.createScriptProcessor(4096, 1, 1);
       processorRef.current = processor;
       source.connect(processor);
@@ -389,7 +343,6 @@ export function Chat({ hidden }: { hidden?: boolean }) {
         pcmChunks.push(int16.buffer);
       };
 
-      // Store pcmChunks ref for sending later
       chunksRef.current = pcmChunks as unknown as Blob[];
 
       setRecordingStart(Date.now());
@@ -403,7 +356,6 @@ export function Chat({ hidden }: { hidden?: boolean }) {
     setRecording(false);
     setAnalyser(null);
 
-    // Stop processor and stream
     if (processorRef.current) {
       processorRef.current.disconnect();
       processorRef.current = null;
@@ -416,7 +368,6 @@ export function Chat({ hidden }: { hidden?: boolean }) {
     const pcmChunks = chunksRef.current as unknown as ArrayBuffer[];
     if (!pcmChunks || pcmChunks.length < 3) return;
 
-    // Merge PCM chunks
     const totalLen = pcmChunks.reduce((a, c) => a + c.byteLength, 0);
     const merged = new Uint8Array(totalLen);
     let off = 0;
@@ -424,7 +375,6 @@ export function Chat({ hidden }: { hidden?: boolean }) {
       merged.set(new Uint8Array(c), off);
       off += c.byteLength;
     }
-    // Chunk the conversion to avoid stack overflow on large arrays
     let binaryStr = "";
     const chunkSize = 8192;
     for (let i = 0; i < merged.length; i += chunkSize) {
@@ -438,8 +388,6 @@ export function Chat({ hidden }: { hidden?: boolean }) {
       audioCtxRef.current = null;
     }
 
-    // Send via Realtime API
-    // Bail if chat was closed during async gap
     if (responseDoneRef.current) return;
 
     setLoading(true);
@@ -447,16 +395,14 @@ export function Chat({ hidden }: { hidden?: boolean }) {
     setThinking(true);
 
     try {
-      // Get ephemeral session
       const sessionRes = await fetch("/api/realtime/session", { method: "POST" });
       if (!sessionRes.ok) throw new Error("Session failed");
-      if (responseDoneRef.current) return; // closed during fetch
+      if (responseDoneRef.current) return;
 
       const session = await sessionRes.json();
       const ephemeralKey = session.client_secret?.value;
       if (!ephemeralKey) throw new Error("No ephemeral key");
 
-      // Connect WebSocket
       const ws = new WebSocket(
         `wss://api.openai.com/v1/realtime?model=gpt-realtime-1.5`,
         ["realtime", `openai-insecure-api-key.${ephemeralKey}`, "openai-beta.realtime-v1"]
@@ -467,7 +413,6 @@ export function Chat({ hidden }: { hidden?: boolean }) {
       audioChunksRef.current = [];
 
       ws.onopen = () => {
-        // Send the audio
         ws.send(JSON.stringify({
           type: "conversation.item.create",
           item: {
@@ -483,12 +428,10 @@ export function Chat({ hidden }: { hidden?: boolean }) {
       responseDoneRef.current = false;
 
       ws.onmessage = (event) => {
-        // Ignore all events after response is complete
         if (responseDoneRef.current) return;
 
         const msg = JSON.parse(event.data);
 
-        // User transcript
         if (msg.type === "conversation.item.input_audio_transcription.completed") {
           const userText = msg.transcript?.trim();
           if (userText) {
@@ -496,7 +439,6 @@ export function Chat({ hidden }: { hidden?: boolean }) {
           }
         }
 
-        // Response started — clear thinking, add empty assistant message
         if (msg.type === "response.created" || msg.type === "response.output_item.added") {
           if (!assistantAdded) {
             setThinking(false);
@@ -505,7 +447,6 @@ export function Chat({ hidden }: { hidden?: boolean }) {
           }
         }
 
-        // Assistant audio transcript delta (text version of audio output)
         if (msg.type === "response.audio_transcript.delta" || msg.type === "response.output_audio_transcript.delta") {
           const delta = msg.delta || "";
           transcriptText += delta;
@@ -516,7 +457,6 @@ export function Chat({ hidden }: { hidden?: boolean }) {
           ]);
         }
 
-        // Assistant text delta (text-only modality)
         if (msg.type === "response.text.delta" || msg.type === "response.output_text.delta") {
           const delta = msg.delta || "";
           transcriptText += delta;
@@ -533,7 +473,6 @@ export function Chat({ hidden }: { hidden?: boolean }) {
           }
         }
 
-        // Assistant audio delta
         if (msg.type === "response.audio.delta" || msg.type === "response.output_audio.delta") {
           if (msg.delta && ttsEnabled) {
             const binary = atob(msg.delta);
@@ -545,7 +484,6 @@ export function Chat({ hidden }: { hidden?: boolean }) {
           }
         }
 
-        // Error
         if (msg.type === "error") {
           responseDoneRef.current = true;
           setThinking(false);
@@ -555,16 +493,13 @@ export function Chat({ hidden }: { hidden?: boolean }) {
           wsRef.current = null;
         }
 
-        // Response done — play audio once then fully shut down
         if (msg.type === "response.done") {
           responseDoneRef.current = true;
           setLoading(false);
 
-          // Grab chunks and clear immediately to prevent double-play
           const chunks = [...audioChunksRef.current];
           audioChunksRef.current = [];
 
-          // Only play if chat is still open
           if (ttsEnabled && chunks.length > 0 && openRef.current) {
             playPcm16(chunks);
           }
@@ -588,7 +523,6 @@ export function Chat({ hidden }: { hidden?: boolean }) {
     } catch {
       setThinking(false);
       setLoading(false);
-      // Fallback: use transcribe + text chat
       const formData = new FormData();
       const blob = new Blob([merged], { type: "audio/pcm" });
       formData.append("audio", blob, "audio.webm");
@@ -651,7 +585,6 @@ export function Chat({ hidden }: { hidden?: boolean }) {
         ]);
       }
 
-      // Auto-play TTS if sent via voice and chat is still open
       if (fromVoice && content && openRef.current) {
         playTts(content);
       }
@@ -672,139 +605,65 @@ export function Chat({ hidden }: { hidden?: boolean }) {
     send(input);
   }
 
-  return (
-    <div className="fixed bottom-4 right-4 z-50 sm:bottom-6 sm:right-6" style={{ width: `min(${PANEL_W}px, calc(100vw - 32px))`, display: hidden ? "none" : undefined }}>
-      <motion.div
-        ref={wrapperRef}
-        initial={false}
-        animate={{
-          width: open ? Math.min(PANEL_W, typeof window !== "undefined" ? window.innerWidth - 32 : PANEL_W) : 140,
-          height: open ? Math.min(PANEL_H, typeof window !== "undefined" ? window.innerHeight - 32 : PANEL_H) : PILL_H,
-        }}
-        transition={{
-          type: "spring",
-          stiffness: 500,
-          damping: 40,
-          mass: 0.8,
-        }}
-        className="relative ml-auto"
-      >
-        <div
-          className={`chat-card relative flex h-full w-full flex-col overflow-hidden ${open ? "chat-card--open" : "border border-border bg-background shadow-2xl"}`}
-          style={{
-            borderRadius: open ? 16 : 22,
-            boxShadow: open ? "0 0 0 1px rgba(255,255,255,0.12)" : undefined,
-          }}
+  const openChat = () => {
+    stopAudio();
+    responseDoneRef.current = true;
+    if (wsRef.current) {
+      wsRef.current.onmessage = null;
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+    audioChunksRef.current = [];
+    responseDoneRef.current = false;
+    setMessages([]);
+    setInput("");
+    setThinking(false);
+    setLoading(false);
+    setSpeaking(false);
+    setOpen(true);
+  };
+
+  const panelUI = (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
+        <div className="flex items-center gap-2.5">
+          <Image src="/logo.png" alt="RC" width={20} height={20} className="invert" />
+          <p className="text-sm font-medium">Ask about my work</p>
+        </div>
+        <button
+          onClick={close}
+          aria-label="Close chat"
+          className="rounded-full p-1 text-muted-foreground transition-colors hover:text-foreground"
         >
-          <style jsx>{`
-            .chat-card--open {
-              background-color: hsla(240, 15%, 9%, 1);
-              color: hsl(0, 0%, 100%);
-            }
-          `}</style>
-        {/* Gradient overlay — behind all content */}
-        {open && (
-          <div
-            className="pointer-events-none absolute inset-0 z-0"
-            style={{
-              borderRadius: 16,
-              backgroundImage: [
-                "radial-gradient(at 88% 40%, hsla(240,15%,9%,1) 0px, transparent 85%)",
-                "radial-gradient(at 49% 30%, hsla(240,15%,9%,1) 0px, transparent 85%)",
-                "radial-gradient(at 14% 26%, hsla(240,15%,9%,1) 0px, transparent 85%)",
-                "radial-gradient(at 0% 64%, hsla(263,93%,56%,1) 0px, transparent 85%)",
-                "radial-gradient(at 41% 94%, hsla(284,100%,84%,1) 0px, transparent 85%)",
-                "radial-gradient(at 100% 99%, hsla(306,100%,57%,1) 0px, transparent 85%)",
-              ].join(","),
-            }}
-          />
-        )}
-        {/* Grain noise */}
-        {open && (
-          <svg className="pointer-events-none absolute inset-0 z-[1] h-full w-full opacity-[0.10]" style={{ borderRadius: 16 }}>
-            <filter id="chat-grain">
-              <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch" />
-            </filter>
-            <rect width="100%" height="100%" filter="url(#chat-grain)" />
-          </svg>
-        )}
+          <X className="size-4" />
+        </button>
+      </div>
 
-        {/* Collapsed pill */}
-        <AnimatePresence>
-          {!open && (
-            <motion.button
-              className="absolute inset-0 z-10 flex items-center justify-center gap-2.5 px-4"
-              onClick={() => {
-                stopAudio();
-                responseDoneRef.current = true;
-                if (wsRef.current) {
-                  wsRef.current.onmessage = null;
-                  wsRef.current.close();
-                  wsRef.current = null;
-                }
-                audioChunksRef.current = [];
-                responseDoneRef.current = false;
-                setMessages([]);
-                setInput("");
-                setThinking(false);
-                setLoading(false);
-                setSpeaking(false);
-                setOpen(true);
-              }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              aria-label="Open AI chat"
-            >
-              <AiOrb size={20} />
-              <span className="text-sm font-medium text-foreground">Ask AI</span>
-            </motion.button>
-          )}
-        </AnimatePresence>
-
-        {/* Expanded chat panel */}
-        <AnimatePresence>
-          {open && (
-            <motion.div
-              className="flex h-full flex-col text-white"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2, delay: 0.1 }}
-            >
-              {/* Header */}
-              <div className="relative z-10 flex items-center gap-3 px-5 py-4">
-                <Image src="/logo.png" alt="RC" width={28} height={28} />
-                <p className="text-base font-semibold">Ask about my work</p>
-              </div>
-
-              <div className="relative z-10 h-px bg-white/10" />
-
-              {/* Messages */}
-              <div ref={scrollRef} className="relative z-10 flex-1 overflow-y-auto px-5 py-5 space-y-4">
+              <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-5 space-y-3">
                 {messages.length === 0 && !thinking && (
                   <motion.div
-                    className="flex flex-col gap-4 pt-6"
+                    className="flex flex-col gap-4 pt-2"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.25 }}
                   >
-                    <p className="text-lg font-semibold tracking-tight text-white">
+                    <p className="text-base font-medium tracking-tight text-foreground">
                       Ask me anything about Robert&apos;s projects, skills, or experience.
                     </p>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-col gap-1">
                       {SUGGESTIONS.map((s, i) => (
                         <motion.button
                           key={s}
                           onClick={() => send(s)}
-                          className="rounded-full border border-white/15 px-3.5 py-1.5 text-xs text-white/70 transition-colors hover:border-white/30 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                          className="group flex items-center justify-between gap-3 border-b border-border py-2.5 text-left text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:text-foreground"
                           initial={{ opacity: 0, y: 4 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.3 + i * 0.04 }}
-                          whileTap={{ scale: 0.97 }}
                         >
-                          {s}
+                          <span>{s}</span>
+                          <span className="text-foreground/30 transition-all group-hover:translate-x-0.5 group-hover:text-foreground">
+                            &rarr;
+                          </span>
                         </motion.button>
                       ))}
                     </div>
@@ -822,8 +681,8 @@ export function Chat({ hidden }: { hidden?: boolean }) {
                     <div
                       className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed overflow-hidden break-words ${
                         msg.role === "user"
-                          ? "bg-white text-black rounded-br-md"
-                          : "bg-[hsla(240,15%,15%,0.95)] text-white rounded-bl-md backdrop-blur-sm"
+                          ? "bg-foreground text-background rounded-br-md"
+                          : "bg-muted text-foreground rounded-bl-md"
                       }`}
                     >
                       {msg.role === "assistant" ? (
@@ -850,7 +709,6 @@ export function Chat({ hidden }: { hidden?: boolean }) {
                   </motion.div>
                 ))}
 
-                {/* Thinking — blue orb loader */}
                 <AnimatePresence>
                   {thinking && (
                     <motion.div
@@ -859,9 +717,9 @@ export function Chat({ hidden }: { hidden?: boolean }) {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
                     >
-                      <div className="flex items-center gap-2.5 rounded-2xl rounded-bl-md bg-[hsla(240,15%,15%,0.95)] backdrop-blur-sm px-4 py-3">
-                        <AiOrb size={16} />
-                        <span className="text-xs text-white/70">{thinkingText}</span>
+                      <div className="flex items-center gap-2 rounded-2xl rounded-bl-md bg-muted px-3.5 py-2.5">
+                        <Loader2 className="size-3 animate-spin text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">{thinkingText}</span>
                       </div>
                     </motion.div>
                   )}
@@ -871,11 +729,9 @@ export function Chat({ hidden }: { hidden?: boolean }) {
               </div>
 
               {/* Input */}
-              <div className="relative z-10 h-px bg-white/10" />
-              <div className="relative z-10">
+              <div className="border-t border-border">
               <AnimatePresence mode="wait">
                 {recording ? (
-                  /* Recording state — live waveform */
                   <motion.div
                     key="recording"
                     className="flex items-center gap-2 px-4 py-3"
@@ -889,7 +745,7 @@ export function Chat({ hidden }: { hidden?: boolean }) {
                       type="button"
                       onClick={stopRecording}
                       aria-label="Stop recording"
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-500/20 text-red-400 transition-colors hover:bg-red-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-500/15 text-red-500 transition-colors hover:bg-red-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       whileTap={{ scale: 0.9 }}
                     >
                       <motion.div
@@ -901,7 +757,6 @@ export function Chat({ hidden }: { hidden?: boolean }) {
                     </motion.button>
                   </motion.div>
                 ) : speaking ? (
-                  /* TTS playback state — animated bars */
                   <motion.div
                     key="speaking"
                     className="flex items-center gap-2 px-4 py-3"
@@ -917,14 +772,13 @@ export function Chat({ hidden }: { hidden?: boolean }) {
                       type="button"
                       onClick={stopAudio}
                       aria-label="Stop playback"
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-foreground transition-colors hover:bg-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       whileTap={{ scale: 0.9 }}
                     >
                       <Square className="size-3" />
                     </motion.button>
                   </motion.div>
                 ) : (
-                  /* Default input state */
                   <motion.form
                     key="input"
                     onSubmit={handleSubmit}
@@ -941,7 +795,7 @@ export function Chat({ hidden }: { hidden?: boolean }) {
                         setTtsEnabled(!ttsEnabled);
                       }}
                       aria-label={ttsEnabled ? "Mute voice" : "Enable voice"}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white/60 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       whileTap={{ scale: 0.9 }}
                     >
                       {ttsEnabled ? <Volume2 className="size-3.5" /> : <VolumeOff className="size-3.5" />}
@@ -954,7 +808,7 @@ export function Chat({ hidden }: { hidden?: boolean }) {
                       onChange={(e) => setInput(e.target.value)}
                       placeholder="Ask something..."
                       disabled={loading}
-                      className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/60 disabled:opacity-50"
+                      className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground disabled:opacity-50"
                     />
 
                     <motion.button
@@ -962,7 +816,7 @@ export function Chat({ hidden }: { hidden?: boolean }) {
                       onClick={startRecording}
                       disabled={loading}
                       aria-label="Start recording"
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white transition-colors hover:bg-white/10 disabled:opacity-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       whileTap={{ scale: 0.9 }}
                     >
                       <Mic className="size-3.5" />
@@ -972,7 +826,7 @@ export function Chat({ hidden }: { hidden?: boolean }) {
                       type="submit"
                       disabled={loading || !input.trim()}
                       aria-label="Send message"
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 disabled:opacity-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-foreground text-background transition-opacity hover:opacity-85 disabled:opacity-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.9 }}
                     >
@@ -982,11 +836,110 @@ export function Chat({ hidden }: { hidden?: boolean }) {
                 )}
               </AnimatePresence>
               </div>
-            </motion.div>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Mobile backdrop when chat is open */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            key="mobile-chat-backdrop"
+            className="fixed inset-0 z-[60] bg-foreground/20 backdrop-blur-md lg:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Mobile: floating pill + morphing panel (existing behavior, bottom-right) */}
+      <div
+        className={`fixed bottom-4 right-4 z-[70] sm:bottom-6 sm:right-6 lg:hidden ${
+          hidden && !open ? "pointer-events-none opacity-0" : ""
+        }`}
+        style={{ width: `min(${PANEL_W}px, calc(100vw - 32px))` }}
+      >
+        <motion.div
+          ref={wrapperRef}
+          initial={false}
+          animate={{
+            width: open ? Math.min(PANEL_W, typeof window !== "undefined" ? window.innerWidth - 32 : PANEL_W) : 140,
+            height: open ? Math.min(PANEL_H, typeof window !== "undefined" ? window.innerHeight - 32 : PANEL_H) : PILL_H,
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 500,
+            damping: 40,
+            mass: 0.8,
+          }}
+          className="relative ml-auto"
+        >
+          <div
+            className="relative flex h-full w-full flex-col overflow-hidden border border-border bg-background text-foreground shadow-lg"
+            style={{ borderRadius: open ? 14 : 22 }}
+          >
+            <AnimatePresence>
+              {!open && (
+                <motion.button
+                  className="absolute inset-0 z-10 flex items-center justify-center gap-2 px-4"
+                  onClick={openChat}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  aria-label="Open AI chat"
+                >
+                  <span className="text-sm font-medium text-foreground">Ask</span>
+                  <Image src="/logo.png" alt="RC" width={18} height={18} className="invert" />
+                </motion.button>
+              )}
+            </AnimatePresence>
+            <AnimatePresence>
+              {open && (
+                <motion.div
+                  className="flex h-full flex-col"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2, delay: 0.1 }}
+                >
+                  {panelUI}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Desktop: right-rail panel, centered in right whitespace */}
+      <div
+        className="pointer-events-none fixed z-40 hidden lg:block"
+        style={{
+          left: "calc(50vw + 17rem)",
+          top: "50%",
+          transform: "translate(-50%, -50%)",
+        }}
+      >
+        <AnimatePresence>
+          {open && (
+            <motion.aside
+              ref={desktopAsideRef}
+              className="pointer-events-auto flex w-[340px] max-h-[calc(100vh-7rem)] flex-col overflow-hidden rounded-xl border border-border bg-background text-foreground shadow-lg"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 380, damping: 34 }}
+            >
+              <div className="flex h-[min(540px,calc(100vh-7rem))] flex-col">
+                {panelUI}
+              </div>
+            </motion.aside>
           )}
         </AnimatePresence>
-        </div>
-      </motion.div>
-    </div>
+      </div>
+    </>
   );
 }

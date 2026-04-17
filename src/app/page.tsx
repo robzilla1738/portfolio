@@ -3,15 +3,21 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import Image from "next/image";
-import { Mail, Brain, Cpu, Server, Zap } from "lucide-react";
-import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
-import { Badge } from "@/components/ui/badge";
+import { ArrowRight, Mail, X } from "lucide-react";
 import { ProjectCard } from "@/components/project-card";
-import { BibleAiDemo } from "@/components/bibleai-demo";
 import { VideoPreview } from "@/components/ui/video-preview";
 import { Chat } from "@/components/chat";
-import { AnimatedBlobs } from "@/components/ui/blobs";
-import { projects } from "@/data/projects";
+import { projects, type Project } from "@/data/projects";
+
+interface DetailSource {
+  id: string;
+  title: string;
+  subtitle: string;
+  meta?: string;
+  body?: string;
+  highlights?: string[];
+  tech?: string[];
+}
 
 const SKILL_GROUPS = [
   {
@@ -73,66 +79,68 @@ function ExperienceItem({
   period,
   highlight,
   details,
+  highlights,
   reduced,
   index,
+  isActive,
+  onShowDetails,
 }: {
   role: string;
   company: string;
   period: string;
   highlight: string;
   details?: string;
+  highlights?: string[];
   reduced: boolean | null;
   index: number;
+  isActive?: boolean;
+  onShowDetails?: (detail: DetailSource) => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
-
+  const hasMore = Boolean(details || (highlights && highlights.length > 0));
   return (
     <motion.div
-      className="flex gap-4"
+      className="flex flex-col gap-2 pb-10 sm:pb-12"
       initial={reduced ? undefined : { opacity: 0, y: 8 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.3, delay: index * 0.05 }}
+      transition={{ duration: 0.3, delay: index * 0.04 }}
     >
-      <div className="flex flex-col items-center pt-2">
-        <div className="h-2 w-2 rounded-full bg-muted-foreground/40" />
-        <div className="mt-1 h-full w-px bg-border" />
-      </div>
-      <div className="flex-1 pb-5">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl" style={{ fontFamily: "var(--font-heading), serif" }}>{role}</span>
-            <span className="text-sm font-sans text-muted-foreground">· {company}</span>
-          </div>
-          <span className="text-xs tabular-nums text-muted-foreground">{period}</span>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 className="text-base font-medium text-foreground">{role}</h3>
+          <span className="text-sm text-muted-foreground">· {company}</span>
         </div>
-        <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-          {highlight}
-        </p>
-        {details && (
-          <>
-            <AnimatePresence>
-              {expanded && (
-                <motion.p
-                  className="mt-2 text-sm leading-relaxed text-muted-foreground"
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.25 }}
-                >
-                  {details}
-                </motion.p>
-              )}
-            </AnimatePresence>
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="mt-1.5 text-[11px] text-muted-foreground/70 transition-colors hover:text-muted-foreground"
-            >
-              {expanded ? "Show less" : "Read more"}
-            </button>
-          </>
-        )}
+        <span className="text-xs tabular-nums text-muted-foreground">{period}</span>
       </div>
+      <p className="text-sm leading-relaxed text-foreground">
+        {highlight}
+      </p>
+      {hasMore && onShowDetails && (
+        <button
+          onClick={() =>
+            onShowDetails({
+              id: `exp-${company}`,
+              title: role,
+              subtitle: company,
+              meta: period,
+              body: details,
+              highlights,
+            })
+          }
+          className={`group/read flex items-center gap-1 self-start text-xs transition-colors ${
+            isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <span className="underline underline-offset-2">
+            {isActive ? "Hide" : "Read more"}
+          </span>
+          <ArrowRight
+            className={`size-3 transition-transform duration-200 ${
+              isActive ? "rotate-180" : "group-hover/read:translate-x-0.5"
+            }`}
+          />
+        </button>
+      )}
     </motion.div>
   );
 }
@@ -169,117 +177,122 @@ function ContactSection({ scroll }: { scroll: (delay?: number) => Record<string,
   return (
     <motion.section
       id="contact"
-      className="rounded-2xl border border-border p-6 sm:p-8"
+      className="flex flex-col gap-5"
       {...scroll()}
     >
-      <div className="mx-auto flex max-w-lg flex-col gap-5">
-        <div>
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            Get in Touch
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Looking for a dev role where I can build real products and go deep
-            on AI. If that sounds like your team, send me a message.
-          </p>
-        </div>
-
-        <AnimatePresence mode="wait">
-          {status === "sent" ? (
-            <motion.div
-              key="sent"
-              className="flex flex-col items-center gap-2 py-8 text-center"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="flex size-10 items-center justify-center rounded-full bg-foreground text-background">
-                <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <p className="text-sm font-medium">Message sent</p>
-              <p className="text-xs text-muted-foreground">I&apos;ll get back to you soon.</p>
-            </motion.div>
-          ) : (
-            <motion.form
-              key="form"
-              onSubmit={handleSubmit}
-              className="flex flex-col gap-4"
-              initial={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              {/* Reason chips */}
-              <div className="flex flex-wrap gap-2">
-                {reasons.map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => setReason(reason === r ? null : r)}
-                    className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
-                      reason === r
-                        ? "border-foreground/30 bg-foreground/10 text-foreground"
-                        : "border-border text-muted-foreground hover:border-foreground/20 hover:text-foreground"
-                    }`}
-                  >
-                    {r}
-                  </button>
-                ))}
-              </div>
-
-              {/* Name + Email side by side */}
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <input
-                  type="text"
-                  placeholder="Name"
-                  required
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="rounded-lg border border-border bg-transparent px-4 py-2.5 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground/30"
-                />
-                <input
-                  type="email"
-                  placeholder="Email"
-                  required
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className="rounded-lg border border-border bg-transparent px-4 py-2.5 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground/30"
-                />
-              </div>
-
-              <textarea
-                placeholder="What's on your mind?"
-                required
-                rows={4}
-                value={form.message}
-                onChange={(e) => setForm({ ...form, message: e.target.value })}
-                className="resize-none rounded-lg border border-border bg-transparent px-4 py-2.5 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground/30"
-              />
-
-              <div className="flex items-center justify-between gap-3">
-                {status === "error" ? (
-                  <p className="text-xs text-red-500">Something went wrong. Try again.</p>
-                ) : (
-                  <span />
-                )}
-                <button
-                  type="submit"
-                  disabled={status === "sending"}
-                  className="rounded-full bg-foreground px-6 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50"
-                >
-                  {status === "sending" ? "Sending..." : "Send"}
-                </button>
-              </div>
-            </motion.form>
-          )}
-        </AnimatePresence>
+      <div className="flex flex-col gap-3">
+        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+          Get in Touch
+        </h2>
+        <p className="max-w-md text-sm text-foreground">
+          Looking for a dev role where I can build real products and go deep
+          on AI. If that sounds like your team, send me a message.
+        </p>
       </div>
+
+      <AnimatePresence mode="wait">
+        {status === "sent" ? (
+          <motion.div
+            key="sent"
+            className="flex flex-col items-start gap-2 py-4"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="flex size-8 items-center justify-center rounded-full bg-foreground text-background">
+              <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p className="text-sm font-medium">Message sent</p>
+            <p className="text-xs text-muted-foreground">I&apos;ll get back to you soon.</p>
+          </motion.div>
+        ) : (
+          <motion.form
+            key="form"
+            onSubmit={handleSubmit}
+            className="flex max-w-lg flex-col gap-3"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="flex flex-wrap gap-2">
+              {reasons.map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setReason(reason === r ? null : r)}
+                  className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                    reason === r
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+                  }`}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <input
+                type="text"
+                placeholder="Name"
+                required
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                className="rounded-sm border border-border bg-transparent px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground"
+              />
+              <input
+                type="email"
+                placeholder="Email"
+                required
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className="rounded-sm border border-border bg-transparent px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground"
+              />
+            </div>
+
+            <textarea
+              placeholder="What's on your mind?"
+              required
+              rows={4}
+              value={form.message}
+              onChange={(e) => setForm({ ...form, message: e.target.value })}
+              className="resize-none rounded-sm border border-border bg-transparent px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground"
+            />
+
+            <div className="flex items-center gap-3">
+              <button
+                type="submit"
+                disabled={status === "sending"}
+                className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background transition-opacity hover:opacity-85 disabled:opacity-50"
+              >
+                {status === "sending" ? "Sending..." : "Send"}
+              </button>
+              {status === "error" && (
+                <p className="text-xs text-red-500">Something went wrong. Try again.</p>
+              )}
+            </div>
+          </motion.form>
+        )}
+      </AnimatePresence>
     </motion.section>
   );
 }
 
 export default function Home() {
   const reduced = useReducedMotion();
-  const [bibleAiOpen, setBibleAiOpen] = useState(false);
+  const [activeDetail, setActiveDetail] = useState<DetailSource | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
+
+  const openDetail = (detail: DetailSource) => {
+    setChatOpen(false);
+    setActiveDetail((cur) => (cur?.id === detail.id ? null : detail));
+  };
+
+  const openChat = () => {
+    setActiveDetail(null);
+    setChatOpen(true);
+  };
   const [activeSection, setActiveSection] = useState("about");
   const [navContactOpen, setNavContactOpen] = useState(false);
   const [navForm, setNavForm] = useState({ name: "", email: "", message: "" });
@@ -291,7 +304,6 @@ export default function Home() {
     const ids = ["about", "work", "experience", "contact"];
     const onScroll = () => {
       const offset = 120;
-      // If near the bottom, activate contact
       if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 50) {
         setActiveSection("contact");
         return;
@@ -310,7 +322,24 @@ export default function Home() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Close nav contact dropdown on click outside
+  // "/" opens chat, "Escape" closes chat or detail panel
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const tag = (document.activeElement?.tagName || "").toLowerCase();
+      const inInput = tag === "input" || tag === "textarea" || (document.activeElement as HTMLElement | null)?.isContentEditable;
+      if (e.key === "/" && !inInput) {
+        e.preventDefault();
+        openChat();
+      }
+      if (e.key === "Escape") {
+        setChatOpen(false);
+        setActiveDetail(null);
+      }
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
   useEffect(() => {
     if (!navContactOpen) return;
     function handleClick(e: MouseEvent) {
@@ -346,7 +375,7 @@ export default function Home() {
     reduced
       ? {}
       : {
-          initial: { opacity: 0, y: 12 } as const,
+          initial: { opacity: 0, y: 10 } as const,
           animate: { opacity: 1, y: 0 } as const,
           transition: { duration: 0.4, delay } as const,
         };
@@ -355,24 +384,24 @@ export default function Home() {
     reduced
       ? {}
       : {
-          initial: { opacity: 0, y: 12 } as const,
+          initial: { opacity: 0, y: 10 } as const,
           whileInView: { opacity: 1, y: 0 } as const,
           viewport: { once: true } as const,
           transition: { duration: 0.4, delay } as const,
         };
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-5xl flex-col gap-20 px-6 pt-24 pb-12 sm:px-10 sm:pt-32">
+    <div className="flex min-h-dvh max-w-2xl flex-col gap-16 px-6 pt-24 pb-16 sm:pl-16 sm:pr-8">
       {/* Hero */}
-      <section className="flex flex-col gap-4">
+      <section className="flex flex-col gap-3">
         <motion.h1
-          className="text-4xl font-semibold tracking-tighter sm:text-6xl"
+          className="text-3xl font-semibold tracking-tight sm:text-4xl"
           {...anim(0)}
         >
           Hi, I&apos;m Robert
         </motion.h1>
         <motion.p
-          className="max-w-[600px] text-muted-foreground md:text-xl"
+          className="max-w-[560px] text-foreground"
           {...anim(0.1)}
         >
           Designer turned developer. I figure things out and make stuff
@@ -382,13 +411,15 @@ export default function Home() {
       </section>
 
       {/* About */}
-      <section id="about" className="flex flex-col gap-4">
-        <motion.h2 className="text-3xl font-bold" {...scroll()}>TL;DR</motion.h2>
-        <motion.p className="text-muted-foreground md:text-xl leading-relaxed" {...scroll(0.08)}>
+      <section id="about" className="flex flex-col gap-3">
+        <motion.h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground" {...scroll()}>
+          TL;DR
+        </motion.h2>
+        <motion.p className="leading-relaxed text-foreground" {...scroll(0.08)}>
           I ran a design agency called{" "}
           <a
             href="#experience"
-            className="text-foreground underline underline-offset-4 hover:text-muted-foreground"
+            className="underline underline-offset-4 hover:text-muted-foreground"
           >
             Fieldtrip (+ more)
           </a>
@@ -396,9 +427,9 @@ export default function Home() {
           whole thing. Good at it, but frustrated. I kept handing off work to
           developers and getting back something that missed the point.
         </motion.p>
-        <motion.p className="text-muted-foreground md:text-xl leading-relaxed" {...scroll(0.16)}>
+        <motion.p className="leading-relaxed text-foreground" {...scroll(0.16)}>
           So I learned to code. Four years later I&apos;ve shipped a cross-platform
-          app to the App Store, fine-tuned two language models, open-sourced
+          app to the App Store, fine-tuned language models, open-sourced
           an AI research tool, and countless other things that never got pushed
           to GitHub. I went deep because surface-level wasn&apos;t going to cut it.
         </motion.p>
@@ -406,22 +437,11 @@ export default function Home() {
 
       {/* Projects */}
       <section id="work" className="flex flex-col gap-6">
-        <motion.div className="flex flex-col gap-2" {...scroll()}>
-          <div className="flex items-center justify-center">
-            <div className="relative w-full">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="bg-background px-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Projects
-                </span>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+        <motion.h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground" {...scroll()}>
+          Projects
+        </motion.h2>
 
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-12 sm:gap-14">
           {projects.map((project, i) => {
             const videoMap: Record<string, string> = {
               "Rhema": "/rhema-hero.mp4",
@@ -431,74 +451,28 @@ export default function Home() {
             };
             const videoSrc = videoMap[project.title];
 
-            // Side-by-side model cards
-            if (project.title === "BibleAI:7b") {
-              const gemma = projects.find((p) => p.title === "GemmaBible:E4B");
-              return (
-                <motion.div
-                  key="model-pair"
-                  className="grid gap-6 md:grid-cols-2"
-                  initial={reduced ? undefined : { opacity: 0, y: 12 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={reduced ? { duration: 0 } : { duration: 0.4 }}
-                >
-                  <ProjectCard
-                    project={project}
-                    index={i}
-                    extra={
-                      <BibleAiDemo
-                        onOpenChange={setBibleAiOpen}
-                        howItWorks={[
-                          { icon: <Brain className="size-4 text-purple-400" />, title: "Custom fine-tuned model", desc: "7B parameter LLM trained on 20 theological datasets covering Protestant, Catholic, and Orthodox traditions." },
-                          { icon: <Cpu className="size-4 text-purple-400" />, title: "QLoRA on Qwen 2.5", desc: "Two-stage training: continued pre-training on biblical corpus, then QLoRA fine-tuning with rank-64 adapters." },
-                          { icon: <Server className="size-4 text-purple-400" />, title: "Serverless GPU", desc: "Runs on a serverless Nvidia T4 GPU via HuggingFace. Scales to zero when idle. ~60s cold start, then fast." },
-                          { icon: <Zap className="size-4 text-purple-400" />, title: "340K+ cross-references", desc: "Greek & Hebrew morphology, Strong's numbers, and misquote correction baked into the training data." },
-                        ]}
-                      />
-                    }
-                  />
-                  {gemma && (
-                    <ProjectCard
-                      project={gemma}
-                      index={i + 1}
-                      extra={
-                        <BibleAiDemo
-                          onOpenChange={setBibleAiOpen}
-                          modelName="GemmaBible:E4B"
-                          apiEndpoint="/api/gemmabible"
-                          buttonLabel="Try GemmaBible"
-                          subtitle="Scholarly responses from the Gemma 4-based model."
-                          grainId="gemma-grain"
-                          supportsThinking
-                          howItWorks={[
-                            { icon: <Brain className="size-4 text-purple-400" />, title: "Gemma 4 base model", desc: "4.5B effective parameters built on Google's Gemma 4 E4B-it architecture." },
-                            { icon: <Cpu className="size-4 text-purple-400" />, title: "QLoRA fine-tuning", desc: "Trained on 8,000 instruction examples across 11 specialized generators using Unsloth with rank-64 adapters." },
-                            { icon: <Server className="size-4 text-purple-400" />, title: "Serverless GPU", desc: "Runs on a serverless Nvidia T4 GPU via HuggingFace. Scales to zero when idle. ~60s cold start, then fast." },
-                            { icon: <Zap className="size-4 text-purple-400" />, title: "Cross-tradition theology", desc: "Comparative theology, Greek/Hebrew exegesis, systematic theology, and creedal analysis." },
-                          ]}
-                        />
-                      }
-                    />
-                  )}
-                </motion.div>
-              );
-            }
-
-            // Skip GemmaBible in the normal loop (rendered above)
-            if (project.title === "GemmaBible:E4B") return null;
+            const handleShowDetails = (p: Project) =>
+              openDetail({
+                id: `project-${p.title}`,
+                title: p.title,
+                subtitle: p.tag,
+                highlights: p.highlights,
+                tech: p.tech,
+              });
 
             const card = (
               <ProjectCard
                 key={project.title}
                 project={project}
                 index={i}
+                onShowDetails={handleShowDetails}
+                isActive={activeDetail?.id === `project-${project.title}`}
               />
             );
 
             if (videoSrc) {
               return (
-                <VideoPreview key={project.title} src={videoSrc} width={400} height={250} disabled={bibleAiOpen}>
+                <VideoPreview key={project.title} src={videoSrc} width={400} height={250}>
                   <div>{card}</div>
                 </VideoPreview>
               );
@@ -510,31 +484,26 @@ export default function Home() {
       </section>
 
       {/* Skills */}
-      <section className="flex flex-col gap-6">
-        <motion.h2 className="text-3xl font-bold" {...scroll()}>I&apos;ve worked with</motion.h2>
-        <div className="columns-1 gap-5 sm:columns-2 lg:columns-3">
+      <section className="flex flex-col gap-5">
+        <motion.h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground" {...scroll()}>
+          I&apos;ve worked with
+        </motion.h2>
+        <div className="flex flex-col gap-3">
           {SKILL_GROUPS.map((group, i) => (
             <motion.div
               key={group.label}
-              className="mb-5 flex break-inside-avoid flex-col gap-2"
-              initial={reduced ? undefined : { opacity: 0, y: 12 }}
+              className="flex flex-col gap-0.5 sm:flex-row sm:gap-4"
+              initial={reduced ? undefined : { opacity: 0, y: 8 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={reduced ? { duration: 0 } : { duration: 0.4, delay: i * 0.06 }}
+              transition={reduced ? { duration: 0 } : { duration: 0.4, delay: i * 0.05 }}
             >
-              <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              <span className="shrink-0 text-xs uppercase tracking-wider text-muted-foreground sm:w-32 sm:pt-0.5">
                 {group.label}
               </span>
-              <div className="flex flex-wrap gap-1.5">
-                {group.skills.map((skill) => (
-                  <span
-                    key={skill}
-                    className="inline-flex items-center rounded-full border border-border bg-card px-2.5 py-1 text-xs text-foreground/90 transition-colors hover:border-foreground/20 hover:text-foreground sm:px-3"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
+              <p className="text-sm leading-relaxed text-foreground">
+                {group.skills.join(" · ")}
+              </p>
             </motion.div>
           ))}
         </div>
@@ -542,249 +511,450 @@ export default function Home() {
 
       {/* Experience */}
       <section id="experience" className="flex flex-col gap-6">
-        <motion.div className="flex flex-col gap-2" {...scroll()}>
-          <div className="relative w-full">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="bg-background px-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Experience
-              </span>
-            </div>
-          </div>
-        </motion.div>
+        <motion.h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground" {...scroll()}>
+          Experience
+        </motion.h2>
 
-        <div className="flex flex-col gap-1">
-          <ExperienceItem
-            role="Founder & Developer"
-            company="Rhema"
-            period="2026 – Present"
-            highlight="Full-stack Bible study platform. Web and iOS from one codebase. 12 production integrations, AI-powered study canvas with OpenAI tool-calling."
-            reduced={reduced}
-            index={0}
-          />
-          <ExperienceItem
-            role="Founder"
-            company="Fieldtrip"
-            period="2015 – Present"
-            highlight="Subscription design + dev business replacing complex project pricing with a flat monthly fee."
-            details="Unlimited design requests handled one at a time. Fast turnarounds, unlimited revisions, custom designs for all branding needs. Predictable pricing that makes budgeting easy for clients."
-            reduced={reduced}
-            index={1}
-          />
-          <ExperienceItem
-            role="Strategy & Partnerships"
-            company="Children's Cup"
-            period="2023 – 2026"
-            highlight="Strategy and partnerships for a nonprofit serving 16,600+ children across 61 CarePoints in 6 countries."
-            details="Worked on strategy and partnership development. The organization's program includes physical health initiatives, mental wellness support, and spiritual fullness activities designed to empower children."
-            reduced={reduced}
-            index={2}
-          />
-          <ExperienceItem
-            role="Creative + Next Gen"
-            company="Our Savior's Church"
-            period="2020 – 2024"
-            highlight="Creative direction for a 15,000-member church across 7 locations in South Louisiana."
-            reduced={reduced}
-            index={3}
-          />
-          <ExperienceItem
-            role="Consultant"
-            company="Ejento"
-            period="2020 (COVID)"
-            highlight="Technical recruiting for SpaceX, Scale AI, Cruise, GitLab, Skydio. Backed by Sequoia, a16z, Google Ventures."
-            details="Augmented recruiting, working in-house as an extension of client teams. Hired Go-To-Market, Operational, Engineering and People leaders for venture-backed startups. VC partners included Sequoia Capital, Andreessen-Horowitz, Google Ventures, First Round Capital, Accel Partners, Greylock, and more. Shut down March 2020 due to COVID-19."
-            reduced={reduced}
-            index={4}
-          />
-          <ExperienceItem
-            role="Consultant"
-            company="Freenome"
-            period="2020 (COVID)"
-            highlight="ML Platform work at an AI genomics startup ($238M Series B) focused on early cancer detection."
-            details="Built infrastructure for computational researchers to ingest datasets and train models on petabytes of genomic data. Featurization pipelines and ML experimentation platform."
-            reduced={reduced}
-            index={5}
-          />
-          <ExperienceItem
-            role="Technical Recruiter & PM"
-            company="Tempo Automation"
-            period="2018 – 2020"
-            highlight="Closed 42 P0/P1 roles in 2 quarters. Managed PCB production for NASA, SpaceX, Tesla, Lockheed Martin."
-            details="Solo internal recruiter for two quarters before building out the team. Worked with CEO on executive searches for VP of People, Product, Business Operations, Operations, all placed. Managed 7+ recruiting agencies and 10+ hiring managers across C/VP/Director levels. As Technical PM, managed PCB assembly production for customers in aerospace (NASA, SpaceX, Blue Origin), medical device, defense (Raytheon, Lockheed Martin), and autonomous vehicles (Tesla, Zoox). Cross-functional work with Software, Operations, Finance, Sales, Manufacturing, and Product teams."
-            reduced={reduced}
-            index={6}
-          />
+        <div className="flex flex-col">
+          {[
+            {
+              role: "Founder & Developer",
+              company: "Rhema",
+              period: "2026 – Present",
+              highlight: "Full-stack Bible study platform. Web and iOS from one codebase. 12 production integrations, AI-powered study canvas with OpenAI tool-calling.",
+              details:
+                "Solo-building a cross-platform Bible study product. One TypeScript codebase ships to web via Next.js and to iOS via Expo, with a shared tRPC API layer and a shared design system. The AI study canvas uses OpenAI tool-calling to generate six distinct visualization types straight from Scripture — timelines, genealogies, maps, cross-reference graphs, and more.",
+              highlights: [
+                "12 production integrations wired end-to-end: Clerk for auth, Stripe for web subscriptions, RevenueCat for iOS subscriptions, PostHog for product analytics, Sentry for error monitoring, Neon for Postgres, Cloudflare R2 for media",
+                "Real-time cross-platform subscription sync between Stripe and RevenueCat so a user upgrading on the web is unlocked on their iPhone in seconds",
+                "Fine-tuned biblical model (GemmaBible / BibleAI) plugs in as an optional inference backend alongside OpenAI",
+                "Continuous deploys on Vercel and EAS. Zero-downtime schema migrations via Drizzle",
+              ],
+            },
+            {
+              role: "Founder",
+              company: "Fieldtrip",
+              period: "2015 – Present",
+              highlight: "Subscription design + dev business replacing complex project pricing with a flat monthly fee.",
+              details:
+                "The subscription design agency I ran for most of a decade before I learned to code. Flat monthly pricing — $1,499 to $1,899 — replacing the chaos of per-project estimates. Clients get unlimited design requests handled one at a time, with 1 to 2 day turnarounds and unlimited revisions.",
+              highlights: [
+                "Scope covers websites, brand identity, logos, and video under one subscription — full creative direction, not just production work",
+                "Built the ops playbook and tooling that actually delivers on 'unlimited, 1–2 day, unlimited revisions' without burning out the team",
+                "Long-tail client retention by treating design as an ongoing relationship rather than a one-off deliverable",
+                "This is the business that made me want to learn to code. I kept designing things I couldn't ship myself and handing off to developers who missed the point",
+              ],
+            },
+            {
+              role: "Strategy & Partnerships",
+              company: "Children's Cup",
+              period: "2023 – 2026",
+              highlight: "Strategy and partnerships for a nonprofit serving 16,600+ children across 61 CarePoints in 6 countries.",
+              details:
+                "Strategy and partnership development for a nonprofit operating CarePoints — neighborhood-based community hubs that combine physical care, mental wellness, and spiritual formation in one location. Scope ranged from fundraising strategy to cross-program alignment to partner relationship design.",
+              highlights: [
+                "Scaled programs touching 16,600+ children across 61 CarePoints in 6 countries",
+                "Built partnerships across corporate, foundation, and grassroots donor pipelines",
+                "CarePoint model integrates nutrition, pastoral care, education, and mental health support under one roof",
+                "Worked across regional directors and local operators to align program delivery with on-the-ground realities in each country",
+              ],
+            },
+            {
+              role: "Creative + Next Gen",
+              company: "Our Savior's Church",
+              period: "2020 – 2024",
+              highlight: "Creative direction for a 15,000-member church across 7 locations in South Louisiana.",
+              details:
+                "Creative direction for a multi-site church serving roughly 15,000 members across 7 campuses. Owned the visual identity, production pipeline, and Next Gen (student ministry) program — essentially everything the congregation interacts with on a weekend.",
+              highlights: [
+                "Brand identity and creative direction across print, digital, and in-venue environmental design",
+                "Next Gen programming reaching students from elementary through college across all 7 campuses",
+                "Built internal design and production capacity on a largely volunteer team, with systems that survived staff turnover",
+                "Weekly production cadence: stage design, graphics, video, and environmental design for live Sunday services",
+              ],
+            },
+            {
+              role: "Consultant",
+              company: "Ejento",
+              period: "2020 (COVID)",
+              highlight: "Technical recruiting for SpaceX, Scale AI, Cruise, GitLab, Skydio. Backed by Sequoia, a16z, Google Ventures.",
+              details:
+                "Augmented recruiting firm working in-house as an extension of client hiring teams. Engagements ended abruptly in March 2020 when COVID froze most early-stage hiring overnight.",
+              highlights: [
+                "Hired Go-To-Market, Operational, Engineering, and People leaders for venture-backed startups",
+                "Recruited candidates into SpaceX, Scale AI, Cruise, GitLab, Skydio",
+                "VC partners on the client roster included Sequoia Capital, Andreessen Horowitz, Google Ventures, First Round Capital, Accel Partners, Greylock",
+                "Full-cycle: sourcing, screening, close coordination with hiring managers, offer negotiation",
+              ],
+            },
+            {
+              role: "Consultant",
+              company: "Freenome",
+              period: "2020 (COVID)",
+              highlight: "ML Platform work at an AI genomics startup ($238M Series B) focused on early cancer detection.",
+              details:
+                "AI genomics startup on a mission to detect cancer early through blood-based multi-omics. I was embedded on the ML Platform team. Work paused when COVID shut down wet-lab operations and reshuffled priorities across the company.",
+              highlights: [
+                "Built ingestion and featurization pipelines for petabyte-scale genomic datasets",
+                "Contributed to an internal ML experimentation platform so computational researchers could train models without hand-rolling infrastructure",
+                "Context: $238M Series B at the time, mission-driven team working at the intersection of ML and cancer biology",
+              ],
+            },
+            {
+              role: "Technical Recruiter & PM",
+              company: "Tempo Automation",
+              period: "2018 – 2020",
+              highlight: "Closed 42 P0/P1 roles in 2 quarters. Managed PCB production for NASA, SpaceX, Tesla, Lockheed Martin.",
+              details:
+                "Two jobs in one. Started as the solo internal recruiter during a hiring surge, then moved into technical PM on the production floor as the recruiting team came online behind me.",
+              highlights: [
+                "Closed 42 P0/P1 roles across 2 quarters as the sole internal recruiter",
+                "Partnered with the CEO on executive searches — VP of People, VP of Product, VP of Business Operations, VP of Operations — all placed",
+                "Managed 7+ recruiting agencies and 10+ hiring managers across C, VP, and Director levels",
+                "As Technical PM, managed PCB assembly production for aerospace (NASA, SpaceX, Blue Origin), defense (Raytheon, Lockheed Martin), medical devices, and autonomous vehicles (Tesla, Zoox)",
+                "Cross-functional coordination across Software, Operations, Finance, Sales, Manufacturing, and Product teams",
+              ],
+            },
+          ].map((item, i) => (
+            <ExperienceItem
+              key={item.company}
+              role={item.role}
+              company={item.company}
+              period={item.period}
+              highlight={item.highlight}
+              details={item.details}
+              highlights={item.highlights}
+              reduced={reduced}
+              index={i}
+              onShowDetails={openDetail}
+              isActive={activeDetail?.id === `exp-${item.company}`}
+            />
+          ))}
         </div>
       </section>
 
-
-{/* Contact */}
+      {/* Contact */}
       <ContactSection scroll={scroll} />
 
       {/* Navbar */}
       <motion.nav
-        className="fixed inset-x-0 top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl"
-        initial={reduced ? undefined : { y: -20, opacity: 0 }}
+        className="fixed inset-x-0 top-0 z-50 bg-background"
+        initial={reduced ? undefined : { y: -16, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.4, delay: 0.1 }}
       >
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6 sm:px-10">
-          <Image src="/logo.png" alt="RC" width={32} height={32} className="rounded-sm invert dark:invert-0" />
-          <div className="flex items-center gap-4 sm:gap-6">
-            {[
-              { id: "about", label: "About" },
-              { id: "work", label: "Projects" },
-              { id: "experience", label: "Experience" },
-              { id: "contact", label: "Contact" },
-            ].map((link) => (
-              <a
-                key={link.id}
-                href={`#${link.id}`}
-                className={`hidden text-sm transition-colors hover:text-foreground sm:block ${activeSection === link.id ? "text-foreground" : "text-muted-foreground"}`}
-              >
-                {link.label}
-              </a>
-            ))}
-            <div className="hidden h-4 w-px bg-border sm:block" />
-            <div className="flex items-center gap-3">
-              {SOCIALS.map((s) =>
-                s.label === "Email" ? (
-                  <div key={s.label} className="relative" ref={navContactRef}>
-                    <button
-                      onClick={() => {
-                        // Mobile: scroll to contact section
-                        if (window.innerWidth < 640) {
-                          document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
-                          return;
-                        }
-                        setNavContactOpen(!navContactOpen);
-                        if (navFormStatus === "sent") { setNavFormStatus("idle"); }
-                      }}
-                      aria-label="Email"
-                      className={`p-1 transition-colors hover:text-foreground ${navContactOpen ? "text-foreground" : "text-muted-foreground"}`}
-                    >
-                      {s.icon}
-                    </button>
-                    <AnimatePresence>
-                      {navContactOpen && (
-                        <motion.div
-                          className="absolute right-0 top-full mt-3 w-80 rounded-xl border border-border bg-background/95 p-4 shadow-xl backdrop-blur-xl"
-                          initial={{ opacity: 0, y: -4, scale: 0.97 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: -4, scale: 0.97 }}
-                          transition={{ type: "spring", stiffness: 500, damping: 30, mass: 0.8 }}
-                        >
-                          <AnimatePresence mode="wait">
-                            {navFormStatus === "sent" ? (
-                              <motion.div
-                                key="sent"
-                                className="flex flex-col items-center gap-2 py-4"
-                                initial={{ opacity: 0, y: 4 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                              >
-                                <div className="flex size-8 items-center justify-center rounded-full bg-foreground text-background">
-                                  <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                  </svg>
-                                </div>
-                                <p className="text-xs text-muted-foreground">Sent!</p>
-                              </motion.div>
-                            ) : (
-                              <motion.form
-                                key="form"
-                                onSubmit={handleNavContactSubmit}
-                                className="flex flex-col gap-3"
-                                initial={{ opacity: 0, y: 4 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -4 }}
-                                transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                              >
-                                <div className="flex flex-wrap gap-1.5">
-                                  {["Hiring", "Freelance", "Collab", "Hello"].map((r) => (
-                                    <button
-                                      key={r}
-                                      type="button"
-                                      onClick={() => setNavReason(navReason === r ? null : r)}
-                                      className={`rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
-                                        navReason === r
-                                          ? "border-foreground/30 bg-foreground/10 text-foreground"
-                                          : "border-border text-muted-foreground hover:text-foreground"
-                                      }`}
-                                    >
-                                      {r}
-                                    </button>
-                                  ))}
-                                </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                  <input
-                                    type="text"
-                                    placeholder="Name"
-                                    required
-                                    value={navForm.name}
-                                    onChange={(e) => setNavForm({ ...navForm, name: e.target.value })}
-                                    className="rounded-lg border border-border bg-transparent px-3 py-2 text-xs outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground/30"
-                                  />
-                                  <input
-                                    type="email"
-                                    placeholder="Email"
-                                    required
-                                    value={navForm.email}
-                                    onChange={(e) => setNavForm({ ...navForm, email: e.target.value })}
-                                    className="rounded-lg border border-border bg-transparent px-3 py-2 text-xs outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground/30"
-                                  />
-                                </div>
-                                <textarea
-                                  placeholder="Message..."
-                                  required
-                                  rows={3}
-                                  value={navForm.message}
-                                  onChange={(e) => setNavForm({ ...navForm, message: e.target.value })}
-                                  className="resize-none rounded-lg border border-border bg-transparent px-3 py-2 text-xs outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground/30"
-                                />
-                                <div className="flex items-center justify-between">
-                                  {navFormStatus === "error" ? (
-                                    <span className="text-[11px] text-red-500">Failed. Retry.</span>
-                                  ) : <span />}
-                                  <button
-                                    type="submit"
-                                    disabled={navFormStatus === "sending"}
-                                    className="rounded-full bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-90 disabled:opacity-50"
-                                  >
-                                    {navFormStatus === "sending" ? "..." : "Send"}
-                                  </button>
-                                </div>
-                              </motion.form>
-                            )}
-                          </AnimatePresence>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                ) : (
-                  <a
-                    key={s.label}
-                    href={s.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={s.label}
-                    className="p-1 text-muted-foreground transition-colors hover:text-foreground"
+        <div className="flex h-14 items-center gap-5 px-6 sm:gap-7 sm:pl-16 sm:pr-8">
+          <Image src="/logo.png" alt="RC" width={28} height={28} className="rounded-sm invert" />
+          {[
+            { id: "about", label: "About" },
+            { id: "work", label: "Projects" },
+            { id: "experience", label: "Experience" },
+            { id: "contact", label: "Contact" },
+          ].map((link) => (
+            <a
+              key={link.id}
+              href={`#${link.id}`}
+              className={`hidden text-sm transition-colors hover:text-foreground sm:block ${activeSection === link.id ? "text-foreground" : "text-muted-foreground"}`}
+            >
+              {link.label}
+            </a>
+          ))}
+          <button
+            type="button"
+            data-chat-opener
+            onClick={openChat}
+            className={`hidden text-sm transition-colors hover:text-foreground sm:block ${chatOpen ? "text-foreground" : "text-muted-foreground"}`}
+          >
+            Ask
+          </button>
+          <div className="ml-2 flex items-center gap-3 sm:ml-4">
+            {SOCIALS.map((s) =>
+              s.label === "Email" ? (
+                <div key={s.label} className="relative" ref={navContactRef}>
+                  <button
+                    onClick={() => {
+                      if (window.innerWidth < 640) {
+                        document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
+                        return;
+                      }
+                      setNavContactOpen(!navContactOpen);
+                      if (navFormStatus === "sent") { setNavFormStatus("idle"); }
+                    }}
+                    aria-label="Email"
+                    className={`p-1 transition-colors hover:text-foreground ${navContactOpen ? "text-foreground" : "text-muted-foreground"}`}
                   >
                     {s.icon}
-                  </a>
-                )
-              )}
-              <AnimatedThemeToggler className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground [&_svg]:size-4" />
-            </div>
+                  </button>
+                  <AnimatePresence>
+                    {navContactOpen && (
+                      <motion.div
+                        className="absolute right-0 top-full mt-3 w-80 rounded-md border border-border bg-background p-4 shadow-md"
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.15 }}
+                      >
+                        <AnimatePresence mode="wait">
+                          {navFormStatus === "sent" ? (
+                            <motion.div
+                              key="sent"
+                              className="flex flex-col items-center gap-2 py-4"
+                              initial={{ opacity: 0, y: 4 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <div className="flex size-8 items-center justify-center rounded-full bg-foreground text-background">
+                                <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                              <p className="text-xs text-muted-foreground">Sent!</p>
+                            </motion.div>
+                          ) : (
+                            <motion.form
+                              key="form"
+                              onSubmit={handleNavContactSubmit}
+                              className="flex flex-col gap-3"
+                              initial={{ opacity: 0, y: 4 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -4 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <div className="flex flex-wrap gap-1.5">
+                                {["Hiring", "Freelance", "Collab", "Hello"].map((r) => (
+                                  <button
+                                    key={r}
+                                    type="button"
+                                    onClick={() => setNavReason(navReason === r ? null : r)}
+                                    className={`rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
+                                      navReason === r
+                                        ? "border-foreground bg-foreground text-background"
+                                        : "border-border text-muted-foreground hover:text-foreground"
+                                    }`}
+                                  >
+                                    {r}
+                                  </button>
+                                ))}
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <input
+                                  type="text"
+                                  placeholder="Name"
+                                  required
+                                  value={navForm.name}
+                                  onChange={(e) => setNavForm({ ...navForm, name: e.target.value })}
+                                  className="rounded-sm border border-border bg-transparent px-2.5 py-1.5 text-xs outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground"
+                                />
+                                <input
+                                  type="email"
+                                  placeholder="Email"
+                                  required
+                                  value={navForm.email}
+                                  onChange={(e) => setNavForm({ ...navForm, email: e.target.value })}
+                                  className="rounded-sm border border-border bg-transparent px-2.5 py-1.5 text-xs outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground"
+                                />
+                              </div>
+                              <textarea
+                                placeholder="Message..."
+                                required
+                                rows={3}
+                                value={navForm.message}
+                                onChange={(e) => setNavForm({ ...navForm, message: e.target.value })}
+                                className="resize-none rounded-sm border border-border bg-transparent px-2.5 py-1.5 text-xs outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground"
+                              />
+                              <div className="flex items-center justify-between">
+                                {navFormStatus === "error" ? (
+                                  <span className="text-[11px] text-red-500">Failed. Retry.</span>
+                                ) : <span />}
+                                <button
+                                  type="submit"
+                                  disabled={navFormStatus === "sending"}
+                                  className="rounded-full bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-85 disabled:opacity-50"
+                                >
+                                  {navFormStatus === "sending" ? "..." : "Send"}
+                                </button>
+                              </div>
+                            </motion.form>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                <a
+                  key={s.label}
+                  href={s.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={s.label}
+                  className="p-1 text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {s.icon}
+                </a>
+              )
+            )}
           </div>
         </div>
       </motion.nav>
 
+      {/* Right-rail "Ask" affordance (desktop only, centered in right whitespace) */}
+      <div
+        className="pointer-events-none fixed z-30 hidden lg:block"
+        style={{
+          left: "calc(50vw + 17rem)",
+          top: "50%",
+          transform: "translate(-50%, -50%)",
+        }}
+      >
+        <AnimatePresence>
+          {!chatOpen && !activeDetail && (
+            <motion.button
+              type="button"
+              data-chat-opener
+              onClick={openChat}
+              aria-label="Ask AI about Robert's work"
+              className="group pointer-events-auto flex flex-col items-start gap-1.5 text-left transition-colors"
+              initial={reduced ? undefined : { opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+            >
+              <span className="flex items-center gap-2 text-sm text-foreground">
+                Ask me anything
+                <span className="inline-block h-3.5 w-[2px] animate-blink bg-foreground" />
+              </span>
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                Press
+                <kbd className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded border border-border bg-background px-1.5 font-sans text-[11px] text-foreground/70 transition-colors group-hover:border-foreground/40 group-hover:text-foreground">
+                  /
+                </kbd>
+                to start
+              </span>
+            </motion.button>
+          )}
+        </AnimatePresence>
+      </div>
+
       {/* Chat */}
-      <Chat hidden={bibleAiOpen} />
+      <Chat open={chatOpen} onOpenChange={setChatOpen} hidden={!!activeDetail} />
+
+      {/* Floating detail panel */}
+      <AnimatePresence>
+        {activeDetail && (() => {
+          const detailContent = (
+            <>
+              <div className="flex items-start justify-between gap-4">
+                <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                  Details
+                </p>
+                <button
+                  onClick={() => setActiveDetail(null)}
+                  aria-label="Close details"
+                  className="-mr-1 -mt-1 shrink-0 p-1 text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </div>
+
+              <div className="mt-3">
+                <h3 className="text-lg font-medium leading-tight text-foreground">
+                  {activeDetail.title}
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">{activeDetail.subtitle}</p>
+                {activeDetail.meta && (
+                  <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">{activeDetail.meta}</p>
+                )}
+              </div>
+
+              {activeDetail.body && (
+                <motion.p
+                  className="mt-5 text-[13px] leading-[1.65] text-foreground"
+                  initial={reduced ? undefined : { opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, delay: 0.08 }}
+                >
+                  {activeDetail.body}
+                </motion.p>
+              )}
+
+              {activeDetail.highlights && activeDetail.highlights.length > 0 && (
+                <ul className={`${activeDetail.body ? "mt-6" : "mt-5"} space-y-3 text-[13px] leading-[1.55] text-foreground`}>
+                  {activeDetail.highlights.map((h, idx) => (
+                    <motion.li
+                      key={h}
+                      className="flex gap-2"
+                      initial={reduced ? undefined : { opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.25, delay: 0.05 + idx * 0.04 }}
+                    >
+                      <span className="mt-[0.55em] h-[3px] w-[3px] shrink-0 rounded-full bg-foreground" />
+                      <span>{h}</span>
+                    </motion.li>
+                  ))}
+                </ul>
+              )}
+
+              {activeDetail.tech && activeDetail.tech.length > 0 && (
+                <div className="mt-7">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                    Tech
+                  </p>
+                  <p className="mt-2 text-[12px] leading-[1.6] text-muted-foreground">
+                    {activeDetail.tech.join(" · ")}
+                  </p>
+                </div>
+              )}
+            </>
+          );
+
+          return (
+            <>
+              {/* Mobile backdrop */}
+              <motion.div
+                className="fixed inset-0 z-[60] bg-foreground/20 backdrop-blur-md lg:hidden"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setActiveDetail(null)}
+              />
+
+              {/* Mobile / tablet: bottom sheet */}
+              <motion.aside
+                key={`sheet-${activeDetail.title}`}
+                className="fixed bottom-0 left-0 right-0 z-[70] max-h-[75vh] overflow-y-auto rounded-t-2xl bg-background px-6 pt-8 pb-[calc(env(safe-area-inset-bottom,0px)+4rem)] shadow-2xl lg:hidden"
+                initial={reduced ? undefined : { opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 24 }}
+                transition={{ type: "spring", stiffness: 380, damping: 34 }}
+              >
+                {detailContent}
+              </motion.aside>
+
+              {/* Desktop: centered in right whitespace */}
+              <div
+                className="pointer-events-none fixed z-40 hidden lg:block"
+                style={{
+                  left: "calc(50vw + 17rem)",
+                  top: "50%",
+                  transform: "translate(-50%, -50%)",
+                }}
+              >
+                <motion.aside
+                  key={`panel-${activeDetail.title}`}
+                  className="pointer-events-auto w-[340px] max-h-[calc(100vh-7rem)] overflow-y-auto"
+                  initial={reduced ? undefined : { opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 380, damping: 34 }}
+                >
+                  {detailContent}
+                </motion.aside>
+              </div>
+            </>
+          );
+        })()}
+      </AnimatePresence>
     </div>
   );
 }

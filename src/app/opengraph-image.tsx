@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Robert Courson | Designer turned developer";
+export const alt = "Robert Courson — Designer turned developer";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -14,19 +14,19 @@ export default function OGImage() {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center",
-          padding: "80px 100px",
-          backgroundColor: "#1a1a1a",
-          color: "#fafafa",
+          justifyContent: "flex-start",
+          padding: "96px 120px",
+          backgroundColor: "#ffffff",
+          color: "#0a0a0a",
           fontFamily: "system-ui, sans-serif",
         }}
       >
         <div
           style={{
-            fontSize: 72,
-            fontWeight: 700,
-            letterSpacing: "-0.03em",
-            lineHeight: 1.1,
+            fontSize: 14,
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            color: "#8a8a8a",
           }}
         >
           Robert Courson
@@ -34,52 +34,59 @@ export default function OGImage() {
 
         <div
           style={{
-            fontSize: 28,
-            color: "#a0a0a0",
-            marginTop: 20,
-            lineHeight: 1.5,
-            maxWidth: 700,
+            fontSize: 96,
+            fontWeight: 600,
+            letterSpacing: "-0.035em",
+            lineHeight: 1.05,
+            marginTop: 48,
           }}
         >
-          Designer turned developer. Full-stack apps, fine-tuned LLMs, RAG pipelines. 10 years of design, 4 years of engineering.
+          Designer turned
+          <br />
+          developer.
         </div>
 
         <div
           style={{
-            display: "flex",
-            gap: 12,
-            marginTop: 40,
-            flexWrap: "wrap",
+            fontSize: 28,
+            color: "#555",
+            marginTop: 36,
+            lineHeight: 1.45,
+            maxWidth: 860,
           }}
         >
-          {["Next.js", "TypeScript", "Python", "QLoRA", "RAG", "OpenAI", "React Native"].map(
-            (tag) => (
-              <div
-                key={tag}
-                style={{
-                  fontSize: 16,
-                  color: "#999",
-                  border: "1px solid #333",
-                  borderRadius: 999,
-                  padding: "8px 20px",
-                }}
-              >
-                {tag}
-              </div>
-            )
-          )}
+          Full-stack apps, fine-tuned LLMs, RAG pipelines. 10 years of design, 4 years writing code.
         </div>
 
         <div
           style={{
             position: "absolute",
-            bottom: 60,
-            right: 100,
-            fontSize: 18,
-            color: "#555",
+            left: 120,
+            right: 120,
+            bottom: 72,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            fontSize: 20,
+            color: "#8a8a8a",
           }}
         >
-          robcourson.com
+          <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+            {["Rhema", "Memorwise", "svvarm", "GemmaBible"].map((tag, i) => (
+              <div
+                key={tag}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 14,
+                }}
+              >
+                <span style={{ color: "#0a0a0a" }}>{tag}</span>
+                {i < 3 && <span style={{ color: "#c8c8c8" }}>·</span>}
+              </div>
+            ))}
+          </div>
+          <div>robcourson.com</div>
         </div>
       </div>
     ),

@@ -19,9 +19,11 @@ export const projects: Project[] = [
     title: "Rhema",
     hook: "Full-stack Bible study platform: 78 books, 3 translations, 90K+ verse commentaries. The AI study canvas uses OpenAI tool-calling to generate timelines, genealogies, and maps from Scripture. One codebase for web and iOS.",
     highlights: [
-      "12 production integrations: Clerk, Stripe, RevenueCat, PostHog, Sentry, Neon, Cloudflare R2",
-      "OpenAI tool-calling drives the study canvas \u2014 6 visualization types including timelines, genealogies, and maps",
-      "Cross-platform subscription sync between Stripe (web) and RevenueCat (iOS) in real time",
+      "12 production integrations wired end-to-end: Clerk (auth), Stripe (web payments), RevenueCat (iOS subscriptions), PostHog (analytics), Sentry (monitoring), Neon (Postgres), Cloudflare R2 (media), Mailgun (transactional email), and more",
+      "OpenAI tool-calling drives the study canvas \u2014 6 visualization types including timelines, genealogies, maps, cross-reference graphs, and commentary sidebars generated directly from verses",
+      "Cross-platform subscription sync between Stripe (web) and RevenueCat (iOS) in real time, so upgrades on one device unlock features on the other in seconds",
+      "Shared TypeScript codebase across Next.js (web) and Expo (iOS) with a unified tRPC API and Drizzle/Neon Postgres backend",
+      "Fine-tuned biblical model (GemmaBible / BibleAI) plugs in as an optional inference backend alongside OpenAI",
     ],
     tech: [
       "Next.js",
@@ -42,9 +44,11 @@ export const projects: Project[] = [
     title: "Memorwise",
     hook: "Local-first alternative to NotebookLM. Ingest PDFs, video, audio, URLs \u2014 ask questions, get cited answers. Everything stays on your machine.",
     highlights: [
-      "RAG pipeline with LanceDB vector search \u2014 every answer cites its source document",
-      "8 LLM providers supported. Runs fully local with Ollama or connects to OpenAI, Anthropic, Gemini",
-      "MCP server with 35 tools across 12 categories ships with every install",
+      "RAG pipeline with LanceDB vector search and SQLite metadata \u2014 every answer cites its source document, with inline references back to the exact page or timestamp",
+      "8 LLM providers supported. Runs fully local with Ollama, or plugs into OpenAI, Anthropic, Gemini, Groq, Mistral, DeepSeek, and OpenRouter via a unified provider layer",
+      "Ingestion handles PDFs, transcribed audio, transcribed video, web URLs, and plain text \u2014 all normalized into the same chunked, embedded format",
+      "MCP server with 35 tools across 12 categories ships with every install, so any MCP-compatible client can query the knowledge base directly",
+      "Open source under MIT. Built for privacy-first knowledge work: nothing leaves your machine unless you explicitly wire a hosted provider",
     ],
     tech: [
       "Next.js",
@@ -62,9 +66,11 @@ export const projects: Project[] = [
     title: "svvarm",
     hook: "AI-generated interfaces all look the same. This is a design director plugin for Claude Code \u2014 8,600+ lines covering color theory, typography, layout, and 38 anti-slop detection patterns. Every design decision in one context window.",
     highlights: [
-      "Scores designs 0\u2013100 for AI genericness across 38 patterns, with specific fixes for each",
-      "OKLCH color architecture, fluid type scales with clamp() formulas, 19 curated font pairings",
-      "Published on the Claude Code marketplace. Open source, MIT license",
+      "Scores any design 0\u2013100 for AI genericness across 38 distinct anti-slop patterns, with specific, actionable fixes for each pattern flagged",
+      "OKLCH-first color architecture with perceptually-uniform lightness steps, contrast-checked for WCAG AA out of the box",
+      "Fluid type scales built on clamp() formulas, 19 curated font pairings, and prescriptive rules for line-height, measure, and hierarchy",
+      "Covers layout (spacing systems, grid logic), motion (timing curves, reduced-motion compliance), and accessibility as first-class concerns",
+      "Published on the Claude Code marketplace. Open source, MIT license. Designed to be dropped into any Claude Code project and immediately raise the design ceiling",
     ],
     tech: [
       "Claude Code",
@@ -81,9 +87,11 @@ export const projects: Project[] = [
     title: "Fieldtrip",
     hook: "The design agency I ran before I learned to code. Monthly subscription for unlimited design \u2014 websites, brand identity, logos, video. No project-by-project pricing.",
     highlights: [
-      "$1,499\u2013$1,899/month flat rate. Websites, brand identity, logos, video",
-      "1\u20132 day turnaround, unlimited revisions. Built the ops to actually deliver on that",
-      "This is where I hit the wall that made me want to code \u2014 I kept designing things I couldn\u2019t build",
+      "$1,499\u2013$1,899/month flat rate replacing the chaos of per-project estimates \u2014 predictable pricing, predictable throughput",
+      "1\u20132 day turnaround with unlimited revisions. Built the internal ops playbook and request-queue tooling that actually delivers on that promise without burning out the team",
+      "Scope covers websites, brand identity, logos, and video under one subscription \u2014 full creative direction, not just production work",
+      "Long-tail client retention by treating design as an ongoing relationship, not one-off deliverables",
+      "This is where I hit the wall that made me want to code. I kept designing things I couldn\u2019t ship myself and handing off to developers who missed the point",
     ],
     tech: [
       "Brand Strategy",
@@ -95,35 +103,15 @@ export const projects: Project[] = [
   },
   {
     tag: "Machine Learning \u00b7 Fine-Tuned LLM",
-    title: "BibleAI:7b",
-    hook: "7B-parameter LLM fine-tuned on Qwen 2.5 for biblical scholarship. Two-stage training: continued pre-training on a 17MB theological corpus, then QLoRA fine-tuning across 20 datasets spanning Protestant, Catholic, and Orthodox sources.",
-    highlights: [
-      "17MB training corpus weighted for fair coverage across Protestant, Catholic, and Orthodox traditions",
-      "Greek and Hebrew morphological analysis with 340K+ cross-references and Strong\u2019s numbers",
-      "Trained to detect and correct misquoted Scripture \u2014 not just generate text",
-    ],
-    tech: [
-      "Python",
-      "Unsloth",
-      "QLoRA",
-      "HuggingFace",
-      "Weights & Biases",
-      "RunPod",
-      "Ollama",
-    ],
-    links: [
-      { label: "Ollama", url: "https://ollama.com/robzilla/bibleai" },
-      { label: "HuggingFace", url: "https://huggingface.co/rhemabible/BibleAI" },
-    ],
-  },
-  {
-    tag: "Machine Learning \u00b7 Fine-Tuned LLM",
     title: "GemmaBible:E4B",
-    hook: "4.5B effective parameter model fine-tuned on Gemma 4 E4B-it. QLoRA with rank-64 adapters on 8,000 instruction examples \u2014 comparative theology, Greek/Hebrew exegesis, creedal analysis.",
+    hook: "Gemma 4 E4B model refined for Bible, theology, church history, and faith Q&A. Full CPT \u2192 SFT \u2192 DPO pipeline (three stages most fine-tunes skip) on what is, to my knowledge, the largest rigorously curated biblical-scholarship training corpus assembled outside the frontier AI labs.",
     highlights: [
-      "Built on Google\u2019s Gemma 4 E4B-it \u2014 their latest efficient architecture with 4.5B effective parameters",
-      "11 specialized training generators for systematic theology and cross-tradition analysis",
-      "Precise BSB Scripture quoting, Strong\u2019s numbers, and misquotation correction",
+      "Three-stage training: Continued Pre-Training (CPT) on a curated theological corpus, then Supervised Fine-Tuning (SFT) on 15,289 instruction examples, then Direct Preference Optimization (DPO) on 967 human preference pairs",
+      "SFT details: 3 epochs, LoRA rank 64, trainable params 169M of 8.16B (2.08%), final eval loss 0.4368, final train loss 0.1852",
+      "DPO details: 2 epochs, \u03b2 = 0.1, LoRA rank 32, learning rate 5e-6, final train loss 0.061",
+      "Trained explicitly against fabrication \u2014 does not invent verses, references, Greek, or scholar quotes. If uncertain, it says so",
+      "Scope-locked to Bible / theology / church history / faith Q&A. Cites the Berean Standard Bible (BSB) for exact quoting",
+      "Shipped as merged safetensors, Q8_0 GGUF, and BF16 GGUF. Published on Ollama as \u201cbibleaiq8\u201d and \u201cbibleaibf16\u201d with training logs and checksums for full reproducibility",
     ],
     tech: [
       "Python",
@@ -134,8 +122,8 @@ export const projects: Project[] = [
       "Weights & Biases",
     ],
     links: [
-      { label: "Ollama", url: "https://ollama.com/robzilla/gemmabible" },
-      { label: "HuggingFace", url: "https://huggingface.co/rhemabible/GemmaBible" },
+      { label: "Ollama", url: "https://ollama.com/robzilla/bibleai" },
+      { label: "HuggingFace", url: "https://huggingface.co/rhemabible/BibleAI" },
     ],
   },
 ];

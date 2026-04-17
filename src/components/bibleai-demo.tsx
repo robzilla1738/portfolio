@@ -2,11 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Loader2, Sparkles, RotateCcw, X, Server, Brain, Cpu, Zap } from "lucide-react";
+import { Send, Loader2, RotateCcw, X } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { ShineBorder } from "@/components/ui/shine-border";
-
 const DEFAULT_SUGGESTIONS = [
   "What does John 3:16 mean?",
   "Explain justification across traditions",
@@ -36,7 +34,6 @@ export function BibleAiDemo({
   subtitle = "Scholarly responses from the fine-tuned 7B model.",
   suggestions = DEFAULT_SUGGESTIONS,
   howItWorks,
-  grainId = "bibleai-grain",
   supportsThinking = false,
 }: ModelDemoProps) {
   const [open, setOpen] = useState(false);
@@ -121,7 +118,7 @@ export function BibleAiDemo({
     setError("");
     setLoading(true);
     setCold(false);
-    if (retryCountRef.current === 0) retryCountRef.current = 0; // only reset on fresh sends
+    if (retryCountRef.current === 0) retryCountRef.current = 0;
 
     try {
       const res = await fetch(apiEndpoint, {
@@ -131,12 +128,11 @@ export function BibleAiDemo({
       });
 
       if (res.status === 202) {
-        // Auto-retry up to 6 times (60 seconds total)
         if (retryCountRef.current < 6) {
           setCold(true);
           retryCountRef.current++;
           await new Promise((r) => setTimeout(r, 10000));
-          if (!open) return; // closed while waiting
+          if (!open) return;
           setCold(false);
           return send(text);
         }
@@ -162,7 +158,6 @@ export function BibleAiDemo({
       const reader = res.body?.getReader();
       if (!reader) throw new Error("No stream");
 
-      // Once streaming starts, hide loading/cold states
       setLoading(false);
       setCold(false);
 
@@ -223,28 +218,20 @@ export function BibleAiDemo({
 
   return (
     <>
-      {/* Trigger — rendered inline where the component is placed */}
-      <ShineBorder
-        borderRadius={20}
-        borderWidth={1}
-        duration={12}
-        color={["#a855f7", "#7c3aed", "#60a5fa"]}
-        className="inline-flex cursor-pointer bg-background"
+      {/* Trigger */}
+      <button
+        onClick={() => { setOpen(true); onOpenChange?.(true); }}
+        className="rounded-full bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-85"
       >
-        <button
-          onClick={() => { setOpen(true); onOpenChange?.(true); }}
-          className="flex items-center px-4 py-1.5 text-xs font-medium text-foreground"
-        >
-          {buttonLabel}
-        </button>
-      </ShineBorder>
+        {buttonLabel}
+      </button>
 
       {/* Modal */}
       <AnimatePresence>
         {open && (
           <>
             <motion.div
-              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+              className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -256,47 +243,17 @@ export function BibleAiDemo({
                 className="w-full max-w-2xl"
                 onClick={(e) => e.stopPropagation()}
                 style={{ height: "min(80vh, 700px)" }}
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                initial={{ opacity: 0, scale: 0.97, y: 12 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                exit={{ opacity: 0, scale: 0.97, y: 12 }}
                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
               >
-                <div
-                  className="bibleai-card relative flex h-full w-full flex-col overflow-hidden rounded-2xl text-white shadow-2xl"
-                  style={{ boxShadow: "0 0 0 1px rgba(255,255,255,0.12)" }}
-                >
-                  <style jsx>{`
-                    .bibleai-card {
-                      background-color: hsla(240, 15%, 9%, 1);
-                    }
-                  `}</style>
-                  {/* Gradient overlay */}
-                  <div
-                    className="pointer-events-none absolute inset-0 z-0 rounded-2xl"
-                    style={{
-                      backgroundImage: [
-                        "radial-gradient(at 88% 40%, hsla(240,15%,9%,1) 0px, transparent 85%)",
-                        "radial-gradient(at 49% 30%, hsla(240,15%,9%,1) 0px, transparent 85%)",
-                        "radial-gradient(at 14% 26%, hsla(240,15%,9%,1) 0px, transparent 85%)",
-                        "radial-gradient(at 0% 64%, hsla(263,93%,56%,1) 0px, transparent 85%)",
-                        "radial-gradient(at 41% 94%, hsla(284,100%,84%,1) 0px, transparent 85%)",
-                        "radial-gradient(at 100% 99%, hsla(306,100%,57%,1) 0px, transparent 85%)",
-                      ].join(","),
-                    }}
-                  />
-                  {/* Grain noise */}
-                  <svg className="pointer-events-none absolute inset-0 z-[1] h-full w-full rounded-2xl opacity-[0.10]">
-                    <filter id={grainId}>
-                      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch" />
-                    </filter>
-                    <rect width="100%" height="100%" filter={`url(#${grainId})`} />
-                  </svg>
-
+                <div className="relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-border bg-background text-foreground shadow-2xl">
                   {/* Header */}
-                  <div className="relative z-10 flex items-center justify-between border-b border-white/10 px-6 py-4">
+                  <div className="flex items-center justify-between border-b border-border px-6 py-4">
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-semibold">{modelName}</span>
-                      <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] text-white/70">
+                      <span className="rounded-full border border-border px-2.5 py-0.5 text-[11px] text-muted-foreground">
                         {modelTag}
                       </span>
                     </div>
@@ -304,7 +261,7 @@ export function BibleAiDemo({
                       {(response || error || cold) && (
                         <button
                           onClick={reset}
-                          className="flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-1 text-xs text-white/70 transition-colors hover:text-white"
+                          className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
                         >
                           <RotateCcw className="size-3" />
                           New
@@ -312,7 +269,7 @@ export function BibleAiDemo({
                       )}
                       <button
                         onClick={close}
-                        className="rounded-full p-2 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+                        className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                       >
                         <X className="size-4" />
                       </button>
@@ -320,7 +277,7 @@ export function BibleAiDemo({
                   </div>
 
                   {/* Content */}
-                  <div className="relative z-10 flex-1 overflow-y-auto px-6 py-6" ref={responseRef}>
+                  <div className="flex-1 overflow-y-auto px-6 py-6" ref={responseRef}>
                     {/* Empty state */}
                     {!response && !loading && !error && !cold && !prompt && (
                       <motion.div
@@ -330,11 +287,11 @@ export function BibleAiDemo({
                         transition={{ delay: 0.15 }}
                       >
                         <div>
-                          <h3 className="text-2xl font-semibold sm:text-3xl">Ask {modelName} anything</h3>
-                          <p className="mt-1 text-sm text-white/70">
+                          <h3 className="text-2xl font-semibold tracking-tight sm:text-3xl">Ask {modelName} anything</h3>
+                          <p className="mt-1 text-sm text-muted-foreground">
                             {subtitle}
                           </p>
-                          <p className="mt-2 text-xs text-white/60">
+                          <p className="mt-2 text-xs text-muted-foreground/80">
                             First message takes about 60 seconds while the GPU warms up. After that, responses are fast.
                           </p>
                         </div>
@@ -343,7 +300,7 @@ export function BibleAiDemo({
                             <motion.button
                               key={s}
                               onClick={() => send(s)}
-                              className="rounded-full border border-white/15 px-3 py-1.5 text-xs text-white/70 transition-colors hover:border-white/30 hover:text-white sm:px-4 sm:py-2 sm:text-sm"
+                              className="rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-foreground hover:text-foreground sm:px-4 sm:py-2 sm:text-sm"
                               initial={{ opacity: 0, y: 6 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: 0.2 + i * 0.05 }}
@@ -359,7 +316,7 @@ export function BibleAiDemo({
                     {/* User question */}
                     {prompt && (
                       <div className="mb-5 flex justify-end">
-                        <div className="max-w-[80%] rounded-2xl rounded-br-md bg-white px-4 py-3 text-sm leading-relaxed text-black">
+                        <div className="max-w-[80%] rounded-2xl rounded-br-md bg-foreground px-4 py-3 text-sm leading-relaxed text-background">
                           {prompt}
                         </div>
                       </div>
@@ -369,25 +326,25 @@ export function BibleAiDemo({
                     {cold && (
                       <div className="space-y-4">
                         <motion.div
-                          className="flex items-center gap-2.5 rounded-2xl rounded-bl-md bg-white/5 px-4 py-3"
+                          className="flex items-center gap-2.5 rounded-2xl rounded-bl-md bg-muted px-4 py-3"
                           initial={{ opacity: 0, y: 4 }}
                           animate={{ opacity: 1, y: 0 }}
                         >
                           {loading ? (
                             <>
-                              <Loader2 className="size-3.5 animate-spin text-white/50 shrink-0" />
-                              <span className="text-sm text-white/60">
+                              <Loader2 className="size-3.5 animate-spin text-muted-foreground shrink-0" />
+                              <span className="text-sm text-muted-foreground">
                                 Waking up the GPU. Takes about 60 seconds on first request
                               </span>
                             </>
                           ) : (
                             <>
-                              <span className="text-sm text-white/60">
+                              <span className="text-sm text-muted-foreground">
                                 Still loading.
                               </span>
                               <button
                                 onClick={() => { setCold(false); retryCountRef.current = 0; send(prompt); }}
-                                className="text-sm text-white/80 underline underline-offset-2 hover:text-white"
+                                className="text-sm text-foreground underline underline-offset-2 hover:text-muted-foreground"
                               >
                                 Retry
                               </button>
@@ -395,7 +352,7 @@ export function BibleAiDemo({
                           )}
                         </motion.div>
 
-                        {/* How it works cards — shown during cold start */}
+                        {/* How it works cards */}
                         {howItWorks && howItWorks.length > 0 && (
                           <motion.div
                             className="grid gap-3"
@@ -406,15 +363,15 @@ export function BibleAiDemo({
                             {howItWorks.map((item, i) => (
                               <motion.div
                                 key={item.title}
-                                className="flex items-start gap-3 rounded-xl bg-white/5 border border-white/8 px-4 py-3"
+                                className="flex items-start gap-3 rounded-xl border border-border px-4 py-3"
                                 initial={{ opacity: 0, y: 6 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.4 + i * 0.1 }}
                               >
                                 <div className="mt-0.5 shrink-0">{item.icon}</div>
                                 <div>
-                                  <p className="text-sm font-medium text-white/80">{item.title}</p>
-                                  <p className="mt-0.5 text-xs leading-relaxed text-white/50">{item.desc}</p>
+                                  <p className="text-sm font-medium text-foreground">{item.title}</p>
+                                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{item.desc}</p>
                                 </div>
                               </motion.div>
                             ))}
@@ -426,7 +383,7 @@ export function BibleAiDemo({
                     {/* Error */}
                     {error && (
                       <motion.div
-                        className="rounded-2xl rounded-bl-md bg-white/10 p-5 text-sm text-white/70"
+                        className="rounded-2xl rounded-bl-md bg-muted p-5 text-sm text-muted-foreground"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                       >
@@ -437,30 +394,30 @@ export function BibleAiDemo({
                     {/* Loading spinner */}
                     {loading && !cold && (
                       <motion.div
-                        className="flex items-center gap-2.5 rounded-2xl rounded-bl-md bg-white/5 px-4 py-3"
+                        className="flex items-center gap-2.5 rounded-2xl rounded-bl-md bg-muted px-4 py-3"
                         initial={{ opacity: 0, y: 4 }}
                         animate={{ opacity: 1, y: 0 }}
                       >
-                        <Loader2 className="size-3.5 animate-spin text-white/50 shrink-0" />
-                        <span className="text-sm text-white/60">Generating response...</span>
+                        <Loader2 className="size-3.5 animate-spin text-muted-foreground shrink-0" />
+                        <span className="text-sm text-muted-foreground">Generating response...</span>
                       </motion.div>
                     )}
 
-                    {/* Thinking — live stream while thinking, collapsible after */}
+                    {/* Thinking */}
                     {thinking && (
                       <motion.div
-                        className="rounded-2xl rounded-bl-md bg-white/5 border border-white/10 px-4 py-3"
+                        className="rounded-2xl rounded-bl-md border border-border px-4 py-3"
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
                       >
                         <div className="flex items-center gap-2">
-                          <Loader2 className="size-3 animate-spin text-white/40 shrink-0" />
-                          <span className="text-xs text-white/50">Thinking...</span>
+                          <Loader2 className="size-3 animate-spin text-muted-foreground shrink-0" />
+                          <span className="text-xs text-muted-foreground">Thinking...</span>
                         </div>
                         {thinkingText && (
                           <p
                             ref={thinkingRef}
-                            className="scrollbar-none mt-2 text-xs leading-relaxed text-white/30 max-h-40 overflow-y-auto whitespace-pre-wrap"
+                            className="scrollbar-none mt-2 text-xs leading-relaxed text-muted-foreground/80 max-h-40 overflow-y-auto whitespace-pre-wrap"
                           >
                             {thinkingText}
                           </p>
@@ -468,21 +425,21 @@ export function BibleAiDemo({
                       </motion.div>
                     )}
 
-                    {/* Collapsed thinking — after thinking completes */}
+                    {/* Collapsed thinking */}
                     {thinkingDone && thinkingText && !thinking && (
-                      <div className="rounded-2xl rounded-bl-md bg-white/5 border border-white/10">
+                      <div className="rounded-2xl rounded-bl-md border border-border">
                         <button
                           type="button"
                           onClick={() => setThinkingExpanded(!thinkingExpanded)}
                           className="flex w-full items-center gap-2 px-4 py-2.5 text-left"
                         >
                           <svg
-                            className={`size-3 text-white/40 transition-transform ${thinkingExpanded ? "rotate-0" : "-rotate-90"}`}
+                            className={`size-3 text-muted-foreground transition-transform ${thinkingExpanded ? "rotate-0" : "-rotate-90"}`}
                             fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
                           >
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                           </svg>
-                          <span className="text-xs text-white/50">
+                          <span className="text-xs text-muted-foreground">
                             Thought for {thinkDuration} second{thinkDuration !== 1 ? "s" : ""}
                           </span>
                         </button>
@@ -496,7 +453,7 @@ export function BibleAiDemo({
                               className="overflow-hidden"
                             >
                               <p
-                                className="scrollbar-none px-4 pb-3 text-xs leading-relaxed text-white/30 max-h-60 overflow-y-auto whitespace-pre-wrap"
+                                className="scrollbar-none px-4 pb-3 text-xs leading-relaxed text-muted-foreground/80 max-h-60 overflow-y-auto whitespace-pre-wrap"
                               >
                                 {thinkingText}
                               </p>
@@ -513,8 +470,8 @@ export function BibleAiDemo({
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                       >
-                        <div className="w-full rounded-2xl rounded-bl-md bg-white/10 px-5 py-4 break-words">
-                          <div className="chat-markdown text-sm leading-relaxed">
+                        <div className="w-full rounded-2xl rounded-bl-md bg-muted px-5 py-4 break-words">
+                          <div className="chat-markdown text-sm leading-relaxed text-foreground">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
                               {response}
                             </ReactMarkdown>
@@ -525,7 +482,7 @@ export function BibleAiDemo({
                   </div>
 
                   {/* Input */}
-                  <div className="relative z-10 border-t border-white/10 px-6 py-4">
+                  <div className="border-t border-border px-6 py-4">
                     <form onSubmit={handleSubmit} className="flex items-center gap-3">
                       <input
                         ref={inputRef}
@@ -534,12 +491,12 @@ export function BibleAiDemo({
                         onChange={(e) => setInputValue(e.target.value)}
                         placeholder="Ask a theology question..."
                         disabled={loading || thinking}
-                        className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/50 disabled:opacity-50"
+                        className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground disabled:opacity-50"
                       />
                       <motion.button
                         type="submit"
                         disabled={loading || !inputValue.trim()}
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20 disabled:opacity-20"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-foreground text-background transition-opacity hover:opacity-85 disabled:opacity-20"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.9 }}
                       >
