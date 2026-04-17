@@ -1,6 +1,5 @@
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
 export const alt = "Robert Courson — Designer turned developer";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -14,15 +13,15 @@ export default function OGImage() {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "flex-start",
+          justifyContent: "center",
           padding: "96px 120px",
           backgroundColor: "#ffffff",
           color: "#0a0a0a",
-          fontFamily: "system-ui, sans-serif",
         }}
       >
         <div
           style={{
+            display: "flex",
             fontSize: 14,
             letterSpacing: "0.18em",
             textTransform: "uppercase",
@@ -34,23 +33,23 @@ export default function OGImage() {
 
         <div
           style={{
+            display: "flex",
             fontSize: 96,
             fontWeight: 600,
             letterSpacing: "-0.035em",
             lineHeight: 1.05,
-            marginTop: 48,
+            marginTop: 32,
           }}
         >
-          Designer turned
-          <br />
-          developer.
+          Designer turned developer.
         </div>
 
         <div
           style={{
+            display: "flex",
             fontSize: 28,
             color: "#555",
-            marginTop: 36,
+            marginTop: 28,
             lineHeight: 1.45,
             maxWidth: 860,
           }}
@@ -60,33 +59,18 @@ export default function OGImage() {
 
         <div
           style={{
-            position: "absolute",
-            left: 120,
-            right: 120,
-            bottom: 72,
             display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
+            marginTop: 64,
             fontSize: 20,
             color: "#8a8a8a",
+            justifyContent: "space-between",
+            alignItems: "center",
           }}
         >
-          <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-            {["Rhema", "Memorwise", "svvarm", "GemmaBible"].map((tag, i) => (
-              <div
-                key={tag}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 14,
-                }}
-              >
-                <span style={{ color: "#0a0a0a" }}>{tag}</span>
-                {i < 3 && <span style={{ color: "#c8c8c8" }}>·</span>}
-              </div>
-            ))}
+          <div style={{ display: "flex", color: "#0a0a0a" }}>
+            Rhema · Memorwise · svvarm · GemmaBible
           </div>
-          <div>robertcourson.com</div>
+          <div style={{ display: "flex" }}>robertcourson.com</div>
         </div>
       </div>
     ),
