@@ -125,10 +125,6 @@ const THINKING_MESSAGES = [
   "One sec",
 ];
 
-const PANEL_W = 400;
-const PANEL_H = 540;
-const PILL_H = 44;
-
 // --- Chat Component ---
 
 export function Chat({
@@ -842,108 +838,81 @@ export function Chat({
 
   return (
     <>
-      {/* Mobile backdrop when chat is open */}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            key="mobile-chat-backdrop"
-            className="fixed inset-0 z-[60] bg-foreground/20 backdrop-blur-md lg:hidden"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setOpen(false)}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Mobile: floating pill + morphing panel (existing behavior, bottom-right) */}
+      {/* Mobile: floating pill (trigger only) */}
       <div
         className={`fixed bottom-4 right-4 z-[70] sm:bottom-6 sm:right-6 lg:hidden ${
-          hidden && !open ? "pointer-events-none opacity-0" : ""
+          hidden || open ? "pointer-events-none opacity-0" : ""
         }`}
-        style={{ width: `min(${PANEL_W}px, calc(100vw - 32px))` }}
       >
-        <motion.div
-          ref={wrapperRef}
-          initial={false}
-          animate={{
-            width: open ? Math.min(PANEL_W, typeof window !== "undefined" ? window.innerWidth - 32 : PANEL_W) : 140,
-            height: open ? Math.min(PANEL_H, typeof window !== "undefined" ? window.innerHeight - 32 : PANEL_H) : PILL_H,
-          }}
-          transition={{
-            type: "spring",
-            stiffness: 500,
-            damping: 40,
-            mass: 0.8,
-          }}
-          className="relative ml-auto"
+        <button
+          onClick={openChat}
+          aria-label="Open AI chat"
+          className="flex h-11 items-center justify-center gap-2 rounded-full border border-border bg-background px-5 text-foreground shadow-lg transition-opacity"
         >
-          {!reduced && open && (
+          <span className="text-sm font-medium">Ask</span>
+          <Image src="/logo.png" alt="RC" width={18} height={18} className="invert" />
+        </button>
+      </div>
+
+      {/* Mobile: full-screen centered modal when open */}
+      <AnimatePresence>
+        {open && (
+          <div className="lg:hidden">
             <motion.div
-              className="pointer-events-none absolute left-0 right-0 -top-16 h-40"
-              aria-hidden="true"
+              className="fixed inset-0 z-50 bg-white/60 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              style={{
-                WebkitMaskImage:
-                  "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.9) 45%, rgba(0,0,0,1) 75%, rgba(0,0,0,1) 100%)",
-                maskImage:
-                  "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.9) 45%, rgba(0,0,0,1) 75%, rgba(0,0,0,1) 100%)",
-              }}
+              onClick={close}
+            />
+
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8"
+              onClick={close}
             >
               <motion.div
-                className="absolute inset-0 rounded-t-3xl opacity-75 blur-2xl dark:opacity-60"
-                style={{
-                  backgroundImage:
-                    "radial-gradient(circle at 18% 30%, #6366f1 0%, transparent 55%), radial-gradient(circle at 70% 20%, #ec4899 0%, transparent 55%), radial-gradient(circle at 40% 70%, #3b82f6 0%, transparent 55%), radial-gradient(circle at 88% 60%, #a855f7 0%, transparent 55%)",
-                }}
-                animate={{ scale: [1, 1.06, 0.96, 1.02, 1], x: [0, 12, -10, 5, 0], y: [0, -4, 6, -2, 0] }}
-                transition={{
-                  scale: { duration: 18, repeat: Infinity, ease: "easeInOut" },
-                  x: { duration: 21, repeat: Infinity, ease: "easeInOut" },
-                  y: { duration: 17, repeat: Infinity, ease: "easeInOut" },
-                }}
-              />
-            </motion.div>
-          )}
-          <div
-            className="relative flex h-full w-full flex-col overflow-hidden border border-border bg-background text-foreground shadow-lg"
-            style={{ borderRadius: open ? 14 : 22 }}
-          >
-            <AnimatePresence>
-              {!open && (
-                <motion.button
-                  className="absolute inset-0 z-10 flex items-center justify-center gap-2 px-4"
-                  onClick={openChat}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                  aria-label="Open AI chat"
-                >
-                  <span className="text-sm font-medium text-foreground">Ask</span>
-                  <Image src="/logo.png" alt="RC" width={18} height={18} className="invert" />
-                </motion.button>
-              )}
-            </AnimatePresence>
-            <AnimatePresence>
-              {open && (
-                <motion.div
-                  className="flex h-full flex-col"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2, delay: 0.1 }}
-                >
+                ref={wrapperRef}
+                className="relative w-full max-w-2xl"
+                onClick={(e) => e.stopPropagation()}
+                style={{ height: "min(80vh, 700px)" }}
+                initial={{ opacity: 0, scale: 0.97, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.97, y: 12 }}
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              >
+                {!reduced && (
+                  <motion.div
+                    className="pointer-events-none absolute -inset-4"
+                    aria-hidden="true"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                  >
+                    <motion.div
+                      className="absolute inset-0 rounded-3xl opacity-75 blur-2xl dark:opacity-60"
+                      style={{
+                        backgroundImage:
+                          "radial-gradient(circle at 22% 18%, #6366f1 0%, transparent 55%), radial-gradient(circle at 78% 32%, #ec4899 0%, transparent 55%), radial-gradient(circle at 32% 78%, #3b82f6 0%, transparent 55%), radial-gradient(circle at 85% 82%, #a855f7 0%, transparent 55%)",
+                      }}
+                      animate={{ rotate: [0, 8, -6, 3, 0], scale: [1, 1.06, 0.96, 1.02, 1], x: [0, 8, -6, 4, 0], y: [0, -5, 7, -3, 0] }}
+                      transition={{
+                        rotate: { duration: 24, repeat: Infinity, ease: "easeInOut" },
+                        scale: { duration: 18, repeat: Infinity, ease: "easeInOut" },
+                        x: { duration: 21, repeat: Infinity, ease: "easeInOut" },
+                        y: { duration: 17, repeat: Infinity, ease: "easeInOut" },
+                      }}
+                    />
+                  </motion.div>
+                )}
+                <div className="relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-border bg-background text-foreground shadow-2xl">
                   {panelUI}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                </div>
+              </motion.div>
+            </div>
           </div>
-        </motion.div>
-      </div>
+        )}
+      </AnimatePresence>
 
       {/* Desktop: right-rail panel, centered in right whitespace */}
       <div
