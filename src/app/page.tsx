@@ -802,7 +802,7 @@ export default function Home() {
       <div
         className="pointer-events-none fixed z-30 hidden lg:block"
         style={{
-          left: "calc(50vw + 17rem)",
+          left: "calc(50vw + 21rem)",
           top: "50%",
           transform: "translate(-50%, -50%)",
         }}
@@ -935,7 +935,7 @@ export default function Home() {
               <div
                 className="pointer-events-none fixed z-40 hidden lg:block"
                 style={{
-                  left: "calc(50vw + 17rem)",
+                  left: "calc(50vw + 21rem)",
                   top: "50%",
                   transform: "translate(-50%, -50%)",
                 }}
