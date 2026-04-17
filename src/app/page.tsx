@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import Image from "next/image";
-import { ArrowRight, Mail, X } from "lucide-react";
+import { ArrowRight, ChevronRight, Mail, X } from "lucide-react";
 import { ProjectCard } from "@/components/project-card";
 import { VideoPreview } from "@/components/ui/video-preview";
 import { Chat } from "@/components/chat";
@@ -19,31 +19,65 @@ interface DetailSource {
   tech?: string[];
 }
 
-const SKILL_GROUPS = [
-  {
-    label: "AI / ML",
-    skills: ["LLM Integration", "QLoRA Fine-Tuning", "RAG Pipelines", "LangChain", "LanceDB", "ChromaDB", "HuggingFace", "Ollama", "Unsloth", "Weights & Biases", "Python"],
-  },
-  {
-    label: "Infrastructure",
-    skills: ["Vercel", "Cloudflare R2", "Clerk", "Stripe", "Square", "RevenueCat", "PostHog", "Sentry", "Mailgun"],
-  },
-  {
-    label: "Design",
-    skills: ["Brand Strategy", "UI/UX", "Design Systems", "Creative Direction", "Adobe Creative Cloud", "Figma", "Midjourney", "Higgsfield", "Runway"],
-  },
-  {
-    label: "Backend",
-    skills: ["Node.js", "tRPC", "Drizzle ORM", "Postgres", "Supabase", "Neon", "Firebase", "SQLite"],
-  },
-  {
-    label: "Frontend",
-    skills: ["Next.js", "React", "TypeScript", "Tailwind CSS", "Framer Motion", "shadcn/ui"],
-  },
-  {
-    label: "Mobile",
-    skills: ["Expo", "React Native", "Swift"],
-  },
+const PRIMARY_STACK = [
+  "Next.js",
+  "React",
+  "TypeScript",
+  "Tailwind CSS",
+  "Expo",
+  "Node.js",
+  "tRPC",
+  "Postgres",
+  "LLM Integration",
+];
+
+const ALSO_FAMILIAR: { name: string; category: AlsoCategory }[] = [
+  { name: "RAG Pipelines", category: "AI / ML" },
+  { name: "Python", category: "AI / ML" },
+  { name: "QLoRA Fine-Tuning", category: "AI / ML" },
+  { name: "Unsloth", category: "AI / ML" },
+  { name: "HuggingFace", category: "AI / ML" },
+  { name: "Ollama", category: "AI / ML" },
+  { name: "LanceDB", category: "AI / ML" },
+  { name: "ChromaDB", category: "AI / ML" },
+  { name: "LangChain", category: "AI / ML" },
+  { name: "Weights & Biases", category: "AI / ML" },
+  { name: "Swift", category: "Mobile" },
+  { name: "React Native", category: "Mobile" },
+  { name: "Framer Motion", category: "Frontend" },
+  { name: "shadcn/ui", category: "Frontend" },
+  { name: "Drizzle ORM", category: "Backend" },
+  { name: "Neon", category: "Backend" },
+  { name: "Supabase", category: "Backend" },
+  { name: "Vercel", category: "Infrastructure" },
+  { name: "Cloudflare R2", category: "Infrastructure" },
+  { name: "Clerk", category: "Infrastructure" },
+  { name: "Stripe", category: "Infrastructure" },
+  { name: "RevenueCat", category: "Infrastructure" },
+  { name: "PostHog", category: "Infrastructure" },
+  { name: "Sentry", category: "Infrastructure" },
+  { name: "Mailgun", category: "Infrastructure" },
+  { name: "Figma", category: "Design" },
+  { name: "Adobe Creative Cloud", category: "Design" },
+  { name: "Midjourney", category: "Design" },
+  { name: "Runway", category: "Design" },
+];
+
+type AlsoCategory =
+  | "AI / ML"
+  | "Mobile"
+  | "Frontend"
+  | "Backend"
+  | "Infrastructure"
+  | "Design";
+
+const ALSO_CATEGORIES: AlsoCategory[] = [
+  "AI / ML",
+  "Frontend",
+  "Backend",
+  "Mobile",
+  "Infrastructure",
+  "Design",
 ];
 
 const SOCIALS = [
@@ -294,6 +328,11 @@ export default function Home() {
     setChatOpen(true);
   };
   const [activeSection, setActiveSection] = useState("about");
+  const [alsoExpanded, setAlsoExpanded] = useState(false);
+  const [alsoFilter, setAlsoFilter] = useState<AlsoCategory | null>(null);
+  const filteredAlso = alsoFilter
+    ? ALSO_FAMILIAR.filter((item) => item.category === alsoFilter)
+    : ALSO_FAMILIAR;
   const [navContactOpen, setNavContactOpen] = useState(false);
   const [navForm, setNavForm] = useState({ name: "", email: "", message: "" });
   const [navFormStatus, setNavFormStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
@@ -404,9 +443,8 @@ export default function Home() {
           className="max-w-[560px] text-foreground"
           {...anim(0.1)}
         >
-          Designer turned developer. I figure things out and make stuff
-          that works as good as it looks. 10 years of design, 4 years
-          writing code.
+          I kept handing off work to developers and getting back
+          something that missed the point. So I learned to code.
         </motion.p>
       </section>
 
@@ -424,14 +462,14 @@ export default function Home() {
             Fieldtrip (+ more)
           </a>
           {" "}for almost a decade. Brand identity, creative direction, the
-          whole thing. Good at it, but frustrated. I kept handing off work to
-          developers and getting back something that missed the point.
+          whole thing. 10 years of design got me good at making things that
+          look right. It didn&apos;t get me things that shipped.
         </motion.p>
         <motion.p className="leading-relaxed text-foreground" {...scroll(0.16)}>
           So I learned to code. Four years later I&apos;ve shipped a cross-platform
-          app to the App Store, fine-tuned language models, open-sourced
-          an AI research tool, and countless other things that never got pushed
-          to GitHub. I went deep because surface-level wasn&apos;t going to cut it.
+          app to the App Store, fine-tuned language models, and open-sourced
+          an AI research tool. I went deep because surface-level wasn&apos;t going
+          to cut it.
         </motion.p>
       </section>
 
@@ -484,28 +522,76 @@ export default function Home() {
       </section>
 
       {/* Skills */}
-      <section className="flex flex-col gap-5">
+      <section className="flex flex-col gap-4">
         <motion.h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground" {...scroll()}>
-          I&apos;ve worked with
+          Stack
         </motion.h2>
         <div className="flex flex-col gap-3">
-          {SKILL_GROUPS.map((group, i) => (
-            <motion.div
-              key={group.label}
-              className="flex flex-col gap-0.5 sm:flex-row sm:gap-4"
-              initial={reduced ? undefined : { opacity: 0, y: 8 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={reduced ? { duration: 0 } : { duration: 0.4, delay: i * 0.05 }}
+          <motion.p className="leading-relaxed text-foreground" {...scroll(0.05)}>
+            {PRIMARY_STACK.join(" · ")}
+          </motion.p>
+          <motion.div
+            className="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4"
+            initial={reduced ? undefined : { opacity: 0, y: 8 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={reduced ? { duration: 0 } : { duration: 0.4, delay: 0.1 }}
+          >
+            <button
+              type="button"
+              onClick={() => setAlsoExpanded((v) => !v)}
+              className="group flex shrink-0 items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground sm:w-32 sm:pt-1"
+              aria-expanded={alsoExpanded}
             >
-              <span className="shrink-0 text-xs uppercase tracking-wider text-muted-foreground sm:w-32 sm:pt-0.5">
-                {group.label}
-              </span>
-              <p className="text-sm leading-relaxed text-foreground">
-                {group.skills.join(" · ")}
-              </p>
-            </motion.div>
-          ))}
+              <span>Also familiar</span>
+              <ChevronRight
+                className={`size-3 transition-transform duration-200 ${alsoExpanded ? "rotate-90" : ""}`}
+              />
+            </button>
+            <AnimatePresence initial={false}>
+              {alsoExpanded && (
+                <motion.div
+                  key="also-familiar-panel"
+                  className="flex flex-1 flex-col gap-2 overflow-hidden"
+                  initial={reduced ? undefined : { opacity: 0, height: 0 }}
+                  animate={reduced ? undefined : { opacity: 1, height: "auto" }}
+                  exit={reduced ? undefined : { opacity: 0, height: 0 }}
+                  transition={reduced ? { duration: 0 } : { duration: 0.25 }}
+                >
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setAlsoFilter(null)}
+                      className={`rounded-full border px-2.5 py-0.5 text-xs transition-colors ${
+                        alsoFilter === null
+                          ? "border-foreground bg-foreground text-background"
+                          : "border-border text-muted-foreground hover:border-foreground/50 hover:text-foreground"
+                      }`}
+                    >
+                      All
+                    </button>
+                    {ALSO_CATEGORIES.map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setAlsoFilter(cat)}
+                        className={`rounded-full border px-2.5 py-0.5 text-xs transition-colors ${
+                          alsoFilter === cat
+                            ? "border-foreground bg-foreground text-background"
+                            : "border-border text-muted-foreground hover:border-foreground/50 hover:text-foreground"
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {filteredAlso.map((item) => item.name).join(" · ")}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
         </div>
       </section>
 
@@ -521,13 +607,12 @@ export default function Home() {
               role: "Founder & Developer",
               company: "Rhema",
               period: "2026 – Present",
-              highlight: "Full-stack Bible study platform. Web and iOS from one codebase. 12 production integrations, AI-powered study canvas with OpenAI tool-calling.",
+              highlight: "Full-stack Bible study platform. Web and iOS from one codebase, with an AI-powered study canvas.",
               details:
                 "Solo-building a cross-platform Bible study product. One TypeScript codebase ships to web via Next.js and to iOS via Expo, with a shared tRPC API layer and a shared design system. The AI study canvas uses OpenAI tool-calling to generate six distinct visualization types straight from Scripture — timelines, genealogies, maps, cross-reference graphs, and more.",
               highlights: [
                 "12 production integrations wired end-to-end: Clerk for auth, Stripe for web subscriptions, RevenueCat for iOS subscriptions, PostHog for product analytics, Sentry for error monitoring, Neon for Postgres, Cloudflare R2 for media",
                 "Real-time cross-platform subscription sync between Stripe and RevenueCat so a user upgrading on the web is unlocked on their iPhone in seconds",
-                "Fine-tuned biblical model (GemmaBible / BibleAI) plugs in as an optional inference backend alongside OpenAI",
                 "Continuous deploys on Vercel and EAS. Zero-downtime schema migrations via Drizzle",
               ],
             },
@@ -535,7 +620,7 @@ export default function Home() {
               role: "Founder",
               company: "Fieldtrip",
               period: "2015 – Present",
-              highlight: "Subscription design + dev business replacing complex project pricing with a flat monthly fee.",
+              highlight: "Subscription design agency. Flat monthly pricing instead of per-project estimates.",
               details:
                 "The subscription design agency I ran for most of a decade before I learned to code. Flat monthly pricing — $1,499 to $1,899 — replacing the chaos of per-project estimates. Clients get unlimited design requests handled one at a time, with 1 to 2 day turnarounds and unlimited revisions.",
               highlights: [
@@ -549,7 +634,7 @@ export default function Home() {
               role: "Strategy & Partnerships",
               company: "Children's Cup",
               period: "2023 – 2026",
-              highlight: "Strategy and partnerships for a nonprofit serving 16,600+ children across 61 CarePoints in 6 countries.",
+              highlight: "Strategy and partnerships for a nonprofit operating community hubs across six countries.",
               details:
                 "Strategy and partnership development for a nonprofit operating CarePoints — neighborhood-based community hubs that combine physical care, mental wellness, and spiritual formation in one location. Scope ranged from fundraising strategy to cross-program alignment to partner relationship design.",
               highlights: [
@@ -565,7 +650,7 @@ export default function Home() {
               period: "2020 – 2024",
               highlight: "Creative direction for a 15,000-member church across 7 locations in South Louisiana.",
               details:
-                "Creative direction for a multi-site church serving roughly 15,000 members across 7 campuses. Owned the visual identity, production pipeline, and Next Gen (student ministry) program — essentially everything the congregation interacts with on a weekend.",
+                "Creative direction for a multi-site church serving roughly 15,000 members across 7 campuses. Owned the visual identity, production pipeline, and Next Gen (student ministry) program.",
               highlights: [
                 "Brand identity and creative direction across print, digital, and in-venue environmental design",
                 "Next Gen programming reaching students from elementary through college across all 7 campuses",
@@ -577,7 +662,7 @@ export default function Home() {
               role: "Consultant",
               company: "Ejento",
               period: "2020 (COVID)",
-              highlight: "Technical recruiting for SpaceX, Scale AI, Cruise, GitLab, Skydio. Backed by Sequoia, a16z, Google Ventures.",
+              highlight: "Technical recruiting at a VC-backed firm placing candidates into venture-backed startups.",
               details:
                 "Augmented recruiting firm working in-house as an extension of client hiring teams. Engagements ended abruptly in March 2020 when COVID froze most early-stage hiring overnight.",
               highlights: [
@@ -591,7 +676,7 @@ export default function Home() {
               role: "Consultant",
               company: "Freenome",
               period: "2020 (COVID)",
-              highlight: "ML Platform work at an AI genomics startup ($238M Series B) focused on early cancer detection.",
+              highlight: "ML Platform work at an AI genomics startup focused on early cancer detection.",
               details:
                 "AI genomics startup on a mission to detect cancer early through blood-based multi-omics. I was embedded on the ML Platform team. Work paused when COVID shut down wet-lab operations and reshuffled priorities across the company.",
               highlights: [
@@ -604,7 +689,7 @@ export default function Home() {
               role: "Technical Recruiter & PM",
               company: "Tempo Automation",
               period: "2018 – 2020",
-              highlight: "Closed 42 P0/P1 roles in 2 quarters. Managed PCB production for NASA, SpaceX, Tesla, Lockheed Martin.",
+              highlight: "Two jobs in one: lead recruiter during a hiring surge, then technical PM on the production floor.",
               details:
                 "Two jobs in one. Started as the solo internal recruiter during a hiring surge, then moved into technical PM on the production floor as the recruiting team came online behind me.",
               highlights: [
@@ -912,7 +997,7 @@ export default function Home() {
             <>
               {/* Mobile backdrop */}
               <motion.div
-                className="fixed inset-0 z-[60] bg-foreground/20 backdrop-blur-md lg:hidden"
+                className="fixed inset-0 z-[60] bg-background/70 backdrop-blur-md lg:hidden"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -922,13 +1007,45 @@ export default function Home() {
               {/* Mobile / tablet: bottom sheet */}
               <motion.aside
                 key={`sheet-${activeDetail.title}`}
-                className="fixed bottom-0 left-0 right-0 z-[70] max-h-[75vh] overflow-y-auto rounded-t-2xl bg-background px-6 pt-8 pb-[calc(env(safe-area-inset-bottom,0px)+4rem)] shadow-2xl lg:hidden"
+                className="fixed bottom-0 left-0 right-0 z-[70] lg:hidden"
                 initial={reduced ? undefined : { opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 24 }}
                 transition={{ type: "spring", stiffness: 380, damping: 34 }}
               >
-                {detailContent}
+                {!reduced && (
+                  <motion.div
+                    className="pointer-events-none absolute left-0 right-0 -top-16 h-40"
+                    aria-hidden="true"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    style={{
+                      WebkitMaskImage:
+                        "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.9) 45%, rgba(0,0,0,1) 75%, rgba(0,0,0,1) 100%)",
+                      maskImage:
+                        "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.9) 45%, rgba(0,0,0,1) 75%, rgba(0,0,0,1) 100%)",
+                    }}
+                  >
+                    <motion.div
+                      className="absolute inset-0 rounded-t-3xl opacity-75 blur-2xl dark:opacity-60"
+                      style={{
+                        backgroundImage:
+                          "radial-gradient(circle at 18% 30%, #6366f1 0%, transparent 55%), radial-gradient(circle at 70% 20%, #ec4899 0%, transparent 55%), radial-gradient(circle at 40% 70%, #3b82f6 0%, transparent 55%), radial-gradient(circle at 88% 60%, #a855f7 0%, transparent 55%)",
+                      }}
+                      animate={{ scale: [1, 1.06, 0.96, 1.02, 1], x: [0, 12, -10, 5, 0], y: [0, -4, 6, -2, 0] }}
+                      transition={{
+                        scale: { duration: 18, repeat: Infinity, ease: "easeInOut" },
+                        x: { duration: 21, repeat: Infinity, ease: "easeInOut" },
+                        y: { duration: 17, repeat: Infinity, ease: "easeInOut" },
+                      }}
+                    />
+                  </motion.div>
+                )}
+                <div className="relative max-h-[75vh] overflow-y-auto rounded-t-2xl bg-background px-6 pt-8 pb-[calc(env(safe-area-inset-bottom,0px)+4rem)] shadow-2xl">
+                  {detailContent}
+                </div>
               </motion.aside>
 
               {/* Desktop: centered in right whitespace */}
@@ -936,20 +1053,47 @@ export default function Home() {
                 className="pointer-events-none fixed z-40 hidden lg:block"
                 style={{
                   left: "calc(50vw + 21rem)",
-                  top: "50%",
+                  top: "calc(50% + 1.75rem)",
                   transform: "translate(-50%, -50%)",
                 }}
               >
-                <motion.aside
-                  key={`panel-${activeDetail.title}`}
-                  className="pointer-events-auto w-[340px] max-h-[calc(100vh-7rem)] overflow-y-auto"
-                  initial={reduced ? undefined : { opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  transition={{ type: "spring", stiffness: 380, damping: 34 }}
-                >
-                  {detailContent}
-                </motion.aside>
+                <div className="relative">
+                  {!reduced && (
+                    <motion.div
+                      className="pointer-events-none absolute -inset-4"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2, ease: "easeOut" }}
+                      aria-hidden="true"
+                    >
+                      <motion.div
+                        className="absolute inset-0 rounded-3xl opacity-75 blur-2xl dark:opacity-60"
+                        style={{
+                          backgroundImage:
+                            "radial-gradient(circle at 22% 18%, #6366f1 0%, transparent 55%), radial-gradient(circle at 78% 32%, #ec4899 0%, transparent 55%), radial-gradient(circle at 32% 78%, #3b82f6 0%, transparent 55%), radial-gradient(circle at 85% 82%, #a855f7 0%, transparent 55%)",
+                        }}
+                        animate={{ rotate: [0, 8, -6, 3, 0], scale: [1, 1.06, 0.96, 1.02, 1], x: [0, 8, -6, 4, 0], y: [0, -5, 7, -3, 0] }}
+                        transition={{
+                          rotate: { duration: 24, repeat: Infinity, ease: "easeInOut" },
+                          scale: { duration: 18, repeat: Infinity, ease: "easeInOut" },
+                          x: { duration: 21, repeat: Infinity, ease: "easeInOut" },
+                          y: { duration: 17, repeat: Infinity, ease: "easeInOut" },
+                        }}
+                      />
+                    </motion.div>
+                  )}
+                  <motion.aside
+                    key={`panel-${activeDetail.title}`}
+                    className="pointer-events-auto relative w-[340px] max-h-[calc(100vh-7rem)] overflow-y-auto rounded-2xl border border-border bg-background p-6 shadow-lg"
+                    initial={reduced ? undefined : { opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 380, damping: 34 }}
+                  >
+                    {detailContent}
+                  </motion.aside>
+                </div>
               </div>
             </>
           );

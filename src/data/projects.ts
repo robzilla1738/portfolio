@@ -17,13 +17,13 @@ export const projects: Project[] = [
   {
     tag: "Full-Stack Platform \u00b7 Web & iOS",
     title: "Rhema",
-    hook: "Full-stack Bible study platform: 78 books, 3 translations, 90K+ verse commentaries. The AI study canvas uses OpenAI tool-calling to generate timelines, genealogies, and maps from Scripture. One codebase for web and iOS.",
+    hook: "Full-stack Bible study platform for web and iOS from one codebase. The AI study canvas turns any verse into timelines, genealogies, maps, and cross-reference graphs.",
     highlights: [
+      "Content scope: 3 translations, 90K+ verse commentaries, full theological reference library wired into the study canvas",
       "12 production integrations wired end-to-end: Clerk (auth), Stripe (web payments), RevenueCat (iOS subscriptions), PostHog (analytics), Sentry (monitoring), Neon (Postgres), Cloudflare R2 (media), Mailgun (transactional email), and more",
       "OpenAI tool-calling drives the study canvas \u2014 6 visualization types including timelines, genealogies, maps, cross-reference graphs, and commentary sidebars generated directly from verses",
       "Cross-platform subscription sync between Stripe (web) and RevenueCat (iOS) in real time, so upgrades on one device unlock features on the other in seconds",
       "Shared TypeScript codebase across Next.js (web) and Expo (iOS) with a unified tRPC API and Drizzle/Neon Postgres backend",
-      "Fine-tuned biblical model (GemmaBible / BibleAI) plugs in as an optional inference backend alongside OpenAI",
     ],
     tech: [
       "Next.js",
@@ -64,7 +64,7 @@ export const projects: Project[] = [
   {
     tag: "Claude Code Plugin",
     title: "svvarm",
-    hook: "AI-generated interfaces all look the same. This is a design director plugin for Claude Code \u2014 8,600+ lines covering color theory, typography, layout, and 38 anti-slop detection patterns. Every design decision in one context window.",
+    hook: "AI-generated interfaces all look the same. This is a design director plugin for Claude Code, built from studying how senior designers make decisions. Every design choice in one context window.",
     highlights: [
       "Scores any design 0\u2013100 for AI genericness across 38 distinct anti-slop patterns, with specific, actionable fixes for each pattern flagged",
       "OKLCH-first color architecture with perceptually-uniform lightness steps, contrast-checked for WCAG AA out of the box",
@@ -91,7 +91,7 @@ export const projects: Project[] = [
       "1\u20132 day turnaround with unlimited revisions. Built the internal ops playbook and request-queue tooling that actually delivers on that promise without burning out the team",
       "Scope covers websites, brand identity, logos, and video under one subscription \u2014 full creative direction, not just production work",
       "Long-tail client retention by treating design as an ongoing relationship, not one-off deliverables",
-      "This is where I hit the wall that made me want to code. I kept designing things I couldn\u2019t ship myself and handing off to developers who missed the point",
+      "This is where I hit the wall that made me want to code. Designing things I couldn\u2019t ship myself stopped being acceptable",
     ],
     tech: [
       "Brand Strategy",
@@ -104,7 +104,7 @@ export const projects: Project[] = [
   {
     tag: "Machine Learning \u00b7 Fine-Tuned LLM",
     title: "GemmaBible:E4B",
-    hook: "Gemma 4 E4B model refined for Bible, theology, church history, and faith Q&A. Full CPT \u2192 SFT \u2192 DPO pipeline (three stages most fine-tunes skip) on what is, to my knowledge, the largest rigorously curated biblical-scholarship training corpus assembled outside the frontier AI labs.",
+    hook: "Gemma 4 E4B refined for Bible, theology, and church history. Trained explicitly against fabrication: it won\u2019t invent verses, Greek, or scholar quotes.",
     highlights: [
       "Three-stage training: Continued Pre-Training (CPT) on a curated theological corpus, then Supervised Fine-Tuning (SFT) on 15,289 instruction examples, then Direct Preference Optimization (DPO) on 967 human preference pairs",
       "SFT details: 3 epochs, LoRA rank 64, trainable params 169M of 8.16B (2.08%), final eval loss 0.4368, final train loss 0.1852",

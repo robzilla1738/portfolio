@@ -6,7 +6,7 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import { Send, Mic, Volume2, VolumeOff, Square, Loader2, X } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -140,6 +140,7 @@ export function Chat({
   onOpenChange?: (open: boolean) => void;
   hidden?: boolean;
 }) {
+  const reduced = useReducedMotion();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
   const setOpen = (v: boolean) => {
@@ -877,6 +878,36 @@ export function Chat({
           }}
           className="relative ml-auto"
         >
+          {!reduced && open && (
+            <motion.div
+              className="pointer-events-none absolute left-0 right-0 -top-16 h-40"
+              aria-hidden="true"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              style={{
+                WebkitMaskImage:
+                  "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.9) 45%, rgba(0,0,0,1) 75%, rgba(0,0,0,1) 100%)",
+                maskImage:
+                  "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.9) 45%, rgba(0,0,0,1) 75%, rgba(0,0,0,1) 100%)",
+              }}
+            >
+              <motion.div
+                className="absolute inset-0 rounded-t-3xl opacity-75 blur-2xl dark:opacity-60"
+                style={{
+                  backgroundImage:
+                    "radial-gradient(circle at 18% 30%, #6366f1 0%, transparent 55%), radial-gradient(circle at 70% 20%, #ec4899 0%, transparent 55%), radial-gradient(circle at 40% 70%, #3b82f6 0%, transparent 55%), radial-gradient(circle at 88% 60%, #a855f7 0%, transparent 55%)",
+                }}
+                animate={{ scale: [1, 1.06, 0.96, 1.02, 1], x: [0, 12, -10, 5, 0], y: [0, -4, 6, -2, 0] }}
+                transition={{
+                  scale: { duration: 18, repeat: Infinity, ease: "easeInOut" },
+                  x: { duration: 21, repeat: Infinity, ease: "easeInOut" },
+                  y: { duration: 17, repeat: Infinity, ease: "easeInOut" },
+                }}
+              />
+            </motion.div>
+          )}
           <div
             className="relative flex h-full w-full flex-col overflow-hidden border border-border bg-background text-foreground shadow-lg"
             style={{ borderRadius: open ? 14 : 22 }}
@@ -919,24 +950,51 @@ export function Chat({
         className="pointer-events-none fixed z-40 hidden lg:block"
         style={{
           left: "calc(50vw + 21rem)",
-          top: "50%",
+          top: "calc(50% + 1.75rem)",
           transform: "translate(-50%, -50%)",
         }}
       >
         <AnimatePresence>
           {open && (
-            <motion.aside
-              ref={desktopAsideRef}
-              className="pointer-events-auto flex w-[340px] max-h-[calc(100vh-7rem)] flex-col overflow-hidden rounded-xl border border-border bg-background text-foreground shadow-lg"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ type: "spring", stiffness: 380, damping: 34 }}
-            >
-              <div className="flex h-[min(540px,calc(100vh-7rem))] flex-col">
-                {panelUI}
-              </div>
-            </motion.aside>
+            <div className="relative">
+              {!reduced && (
+                <motion.div
+                  className="pointer-events-none absolute -inset-4"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  aria-hidden="true"
+                >
+                  <motion.div
+                    className="absolute inset-0 rounded-3xl opacity-75 blur-2xl dark:opacity-60"
+                    style={{
+                      backgroundImage:
+                        "radial-gradient(circle at 22% 18%, #6366f1 0%, transparent 55%), radial-gradient(circle at 78% 32%, #ec4899 0%, transparent 55%), radial-gradient(circle at 32% 78%, #3b82f6 0%, transparent 55%), radial-gradient(circle at 85% 82%, #a855f7 0%, transparent 55%)",
+                    }}
+                    animate={{ rotate: [0, 8, -6, 3, 0], scale: [1, 1.06, 0.96, 1.02, 1], x: [0, 8, -6, 4, 0], y: [0, -5, 7, -3, 0] }}
+                    transition={{
+                      rotate: { duration: 24, repeat: Infinity, ease: "easeInOut" },
+                      scale: { duration: 18, repeat: Infinity, ease: "easeInOut" },
+                      x: { duration: 21, repeat: Infinity, ease: "easeInOut" },
+                      y: { duration: 17, repeat: Infinity, ease: "easeInOut" },
+                    }}
+                  />
+                </motion.div>
+              )}
+              <motion.aside
+                ref={desktopAsideRef}
+                className="pointer-events-auto relative flex w-[340px] max-h-[calc(100vh-7rem)] flex-col overflow-hidden rounded-xl border border-border bg-background text-foreground shadow-lg"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 380, damping: 34 }}
+              >
+                <div className="flex h-[min(540px,calc(100vh-7rem))] flex-col">
+                  {panelUI}
+                </div>
+              </motion.aside>
+            </div>
           )}
         </AnimatePresence>
       </div>
