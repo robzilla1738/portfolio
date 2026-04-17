@@ -13,7 +13,7 @@ const dmSans = DM_Sans({
 const title = "Robert Courson | Designer turned developer";
 const description =
   "Full-stack developer with a design background and AI specialty. Fine-tuned LLMs, RAG pipelines, production apps end-to-end.";
-const siteUrl = "https://robcourson.com";
+const siteUrl = "https://www.robertcourson.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

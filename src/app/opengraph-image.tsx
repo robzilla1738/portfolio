@@ -86,7 +86,7 @@ export default function OGImage() {
               </div>
             ))}
           </div>
-          <div>robcourson.com</div>
+          <div>robertcourson.com</div>
         </div>
       </div>
     ),
