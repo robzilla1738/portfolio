@@ -1,0 +1,61 @@
+# Robert Courson
+
+> Designer turned developer. 10 years running a design agency, 4 years writing full-stack code with an AI specialty. Fine-tuned LLMs, RAG pipelines, and production apps shipped end-to-end.
+
+Based in the United States. Reachable at robertcourson96@gmail.com.
+
+## About
+
+Robert Courson is a full-stack developer with a design background. He ran Fieldtrip, a subscription design agency, for almost a decade before learning to code. Since 2022 he has been shipping production software in TypeScript, with a focus on AI systems: fine-tuned language models, RAG pipelines, and consumer products that use LLMs end-to-end.
+
+Current primary work: Rhema, a cross-platform Bible study platform (web and iOS from one codebase).
+
+## Projects
+
+### Rhema
+Full-stack Bible study platform shipping to web (Next.js) and iOS (Expo) from one TypeScript codebase. AI study canvas uses OpenAI tool-calling to generate six visualization types (timelines, genealogies, maps, cross-reference graphs, commentary sidebars) directly from Scripture. Backend on tRPC, Neon Postgres, Drizzle ORM. 12 production integrations including Clerk, Stripe, RevenueCat, PostHog, Sentry, Cloudflare R2, Mailgun. Real-time cross-platform subscription sync between web (Stripe) and iOS (RevenueCat). URL: https://rhemabible.co
+
+### Memorwise
+Open-source local-first alternative to NotebookLM. Ingest PDFs, video, audio, URLs. Ask questions, get cited answers. Everything stays on the user's machine. RAG pipeline with LanceDB vector search and SQLite metadata. 8 LLM providers supported (Ollama, OpenAI, Anthropic, Gemini, Groq, Mistral, DeepSeek, OpenRouter). Includes an MCP server with 35 tools across 12 categories. MIT license. URL: https://memorwise.com
+
+### svvarm
+Claude Code plugin that works as a design director. Scores any design 0–100 for AI genericness across 38 anti-slop patterns and provides specific fixes. OKLCH-first color system with WCAG AA contrast checking, fluid type scales on clamp() formulas, 19 font pairings, opinionated rules for line-height and hierarchy. Open source (MIT) on the Claude Code marketplace. URL: https://github.com/robzilla1738/svvarm
+
+### GemmaBible:E4B
+Fine-tuned Google Gemma 4 E4B (4.5B effective parameters) for Bible, theology, and church history. Three-stage training: Continued Pre-Training (CPT) on a theological corpus, Supervised Fine-Tuning (SFT) on 15,289 instruction examples (3 epochs, LoRA rank 64, eval loss 0.4368, train loss 0.1852), and Direct Preference Optimization (DPO) on 967 human preference pairs (2 epochs, β=0.1, LoRA rank 32, learning rate 5e-6, train loss 0.061). Trained explicitly against fabrication: does not invent verses, Greek, or scholar quotes. Cites the Berean Standard Bible. Shipped as safetensors, Q8_0 GGUF, and BF16 GGUF. URLs: https://ollama.com/robzilla/bibleai, https://huggingface.co/rhemabible/BibleAI
+
+### Fieldtrip
+Subscription design agency Robert ran from 2015 to present. Flat monthly pricing ($1,499–$1,899) instead of per-project estimates. Scope covers websites, brand identity, logos, and video under one subscription. 1–2 day turnarounds with unlimited revisions. URL: https://letsfieldtrip.co
+
+## Tech stack
+
+Primary: Next.js, React, TypeScript, Tailwind CSS, Expo, Node.js, tRPC, Postgres, LLM integration.
+
+AI/ML: RAG pipelines, Python, QLoRA fine-tuning, Unsloth, HuggingFace, Ollama, LanceDB, Weights & Biases.
+
+Backend: Drizzle ORM, Neon Postgres.
+
+Frontend: Framer Motion, shadcn/ui.
+
+Infrastructure: Vercel, Cloudflare R2, Clerk, Stripe, RevenueCat, PostHog, Sentry, Mailgun.
+
+Design: Figma, Adobe Creative Cloud, Midjourney, Runway.
+
+Mobile: React Native (via Expo).
+
+## Experience
+
+- 2026–Present: Founder & Developer at Rhema
+- 2015–Present: Founder at Fieldtrip
+- 2023–2026: Strategy & Partnerships at Children's Cup (nonprofit operating CarePoints across 6 countries, scaled programs touching 16,600+ children across 61 CarePoints)
+- 2020–2024: Creative + Next Gen at Our Savior's Church (15,000-member multi-site church across 7 South Louisiana campuses)
+- 2020: Consultant at Ejento (technical recruiting for venture-backed startups: SpaceX, Scale AI, Cruise, GitLab, Skydio)
+- 2020: Consultant at Freenome ($238M Series B genomics startup, ML Platform team)
+- 2018–2020: Technical Recruiter and Technical PM at Tempo Automation (closed 42 P0/P1 roles; PCB assembly production for NASA, SpaceX, Blue Origin, Raytheon, Lockheed Martin, Tesla, Zoox)
+
+## Contact
+
+Email: robertcourson96@gmail.com
+GitHub: https://github.com/robzilla1738
+LinkedIn: https://www.linkedin.com/in/robcourson/
+Portfolio: https://www.robertcourson.com

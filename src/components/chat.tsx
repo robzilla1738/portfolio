@@ -178,9 +178,33 @@ export function Chat({
     scrollToBottom();
   }, [messages, thinking, scrollToBottom]);
 
+  const prevOpenRef = useRef(open);
   useEffect(() => {
+    const wasOpen = prevOpenRef.current;
     openRef.current = open;
-    if (open) setTimeout(() => inputRef.current?.focus(), 400);
+    prevOpenRef.current = open;
+    if (open) {
+      setTimeout(() => inputRef.current?.focus(), 400);
+    } else if (wasOpen) {
+      // Externally closed (e.g. Escape) — tear down active resources
+      stopRecording();
+      stopAudio();
+      responseDoneRef.current = true;
+      if (wsRef.current) {
+        wsRef.current.onmessage = null;
+        wsRef.current.onerror = null;
+        wsRef.current.onopen = null;
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      audioChunksRef.current = [];
+      setMessages([]);
+      setInput("");
+      setThinking(false);
+      setLoading(false);
+      setSpeaking(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => {
@@ -236,6 +260,12 @@ export function Chat({
       audioRef.current.pause();
       audioRef.current = null;
     }
+    scheduledSourcesRef.current.forEach((s) => {
+      try { s.stop(); } catch {}
+    });
+    scheduledSourcesRef.current = [];
+    activeSourcesRef.current = 0;
+    nextPlayTimeRef.current = 0;
     if (pcmCtxRef.current) {
       pcmCtxRef.current.close().catch(() => {});
       pcmCtxRef.current = null;
@@ -249,6 +279,46 @@ export function Chat({
   const streamRef = useRef<MediaStream | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const audioChunksRef = useRef<Int16Array[]>([]);
+  const nextPlayTimeRef = useRef(0);
+  const scheduledSourcesRef = useRef<AudioBufferSourceNode[]>([]);
+  const activeSourcesRef = useRef(0);
+
+  function scheduleAudioChunk(int16: Int16Array) {
+    if (!openRef.current || int16.length === 0) return;
+
+    if (!pcmCtxRef.current) {
+      pcmCtxRef.current = new AudioContext({ sampleRate: 24000 });
+      nextPlayTimeRef.current = 0;
+    }
+    const ctx = pcmCtxRef.current;
+
+    const float32 = new Float32Array(int16.length);
+    for (let i = 0; i < int16.length; i++) float32[i] = int16[i] / 32768;
+
+    const buffer = ctx.createBuffer(1, float32.length, 24000);
+    buffer.copyToChannel(float32, 0);
+
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(ctx.destination);
+
+    const startAt = Math.max(ctx.currentTime, nextPlayTimeRef.current);
+    source.start(startAt);
+    nextPlayTimeRef.current = startAt + buffer.duration;
+
+    scheduledSourcesRef.current.push(source);
+    activeSourcesRef.current++;
+    setSpeaking(true);
+
+    source.onended = () => {
+      activeSourcesRef.current = Math.max(0, activeSourcesRef.current - 1);
+      const idx = scheduledSourcesRef.current.indexOf(source);
+      if (idx >= 0) scheduledSourcesRef.current.splice(idx, 1);
+      if (activeSourcesRef.current === 0) {
+        setSpeaking(false);
+      }
+    };
+  }
 
   async function playTts(text: string) {
     if (!ttsEnabled || !openRef.current) return;
@@ -277,40 +347,8 @@ export function Chat({
     }
   }
 
-  function playPcm16(chunks: Int16Array[]) {
-    if (chunks.length === 0 || !openRef.current) return;
-
-    if (pcmCtxRef.current) {
-      pcmCtxRef.current.close().catch(() => {});
-      pcmCtxRef.current = null;
-    }
-
-    setSpeaking(true);
-
-    const totalLen = chunks.reduce((a, c) => a + c.length, 0);
-    const merged = new Int16Array(totalLen);
-    let offset = 0;
-    for (const c of chunks) { merged.set(c, offset); offset += c.length; }
-
-    const float32 = new Float32Array(merged.length);
-    for (let i = 0; i < merged.length; i++) float32[i] = merged[i] / 32768;
-
-    const ctx = new AudioContext({ sampleRate: 24000 });
-    pcmCtxRef.current = ctx;
-    const buffer = ctx.createBuffer(1, float32.length, 24000);
-    buffer.copyToChannel(float32, 0);
-    const source = ctx.createBufferSource();
-    source.buffer = buffer;
-    source.connect(ctx.destination);
-    source.onended = () => {
-      setSpeaking(false);
-      ctx.close().catch(() => {});
-      if (pcmCtxRef.current === ctx) pcmCtxRef.current = null;
-    };
-    source.start();
-  }
-
-  async function startRecording() {
+async function startRecording() {
+    stopAudio();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 24000 } });
       streamRef.current = stream;
@@ -385,7 +423,10 @@ export function Chat({
       audioCtxRef.current = null;
     }
 
-    if (responseDoneRef.current) return;
+    if (!openRef.current) return;
+
+    // Reset for a new turn
+    responseDoneRef.current = false;
 
     setLoading(true);
     setThinkingText(THINKING_MESSAGES[Math.floor(Math.random() * THINKING_MESSAGES.length)]);
@@ -394,7 +435,7 @@ export function Chat({
     try {
       const sessionRes = await fetch("/api/realtime/session", { method: "POST" });
       if (!sessionRes.ok) throw new Error("Session failed");
-      if (responseDoneRef.current) return;
+      if (!openRef.current) return;
 
       const session = await sessionRes.json();
       const ephemeralKey = session.client_secret?.value;
@@ -432,7 +473,17 @@ export function Chat({
         if (msg.type === "conversation.item.input_audio_transcription.completed") {
           const userText = msg.transcript?.trim();
           if (userText) {
-            setMessages((prev) => [...prev, { role: "user", content: userText }]);
+            setMessages((prev) => {
+              if (assistantAdded && prev.length > 0) {
+                // Assistant bubble already exists — insert user message before it
+                return [
+                  ...prev.slice(0, -1),
+                  { role: "user", content: userText },
+                  prev[prev.length - 1],
+                ];
+              }
+              return [...prev, { role: "user", content: userText }];
+            });
           }
         }
 
@@ -477,7 +528,7 @@ export function Chat({
             for (let i = 0; i < int16.length; i++) {
               int16[i] = binary.charCodeAt(i * 2) | (binary.charCodeAt(i * 2 + 1) << 8);
             }
-            audioChunksRef.current.push(int16);
+            scheduleAudioChunk(int16);
           }
         }
 
@@ -493,13 +544,7 @@ export function Chat({
         if (msg.type === "response.done") {
           responseDoneRef.current = true;
           setLoading(false);
-
-          const chunks = [...audioChunksRef.current];
           audioChunksRef.current = [];
-
-          if (ttsEnabled && chunks.length > 0 && openRef.current) {
-            playPcm16(chunks);
-          }
 
           ws.onmessage = null;
           ws.close();
@@ -623,17 +668,23 @@ export function Chat({
   const panelUI = (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-4">
-        <div className="flex items-center gap-2.5">
-          <Image src="/logo.png" alt="RC" width={20} height={20} className="invert" />
-          <p className="text-sm font-medium">Ask about my work</p>
+        <Image src="/logo.png" alt="RC" width={20} height={20} className="invert" />
+        <div className="flex items-center gap-2">
+          <span className="flex items-center gap-1 whitespace-nowrap text-xs text-muted-foreground">
+            Press
+            <kbd className="inline-flex h-4 items-center justify-center rounded border border-border bg-background px-1 font-sans text-[10px] text-foreground/70">
+              Esc
+            </kbd>
+            to close
+          </span>
+          <button
+            onClick={close}
+            aria-label="Close chat"
+            className="rounded-full p-1 text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <X className="size-4" />
+          </button>
         </div>
-        <button
-          onClick={close}
-          aria-label="Close chat"
-          className="rounded-full p-1 text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <X className="size-4" />
-        </button>
       </div>
 
               <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-5 space-y-3">
@@ -658,9 +709,13 @@ export function Chat({
                           transition={{ delay: 0.3 + i * 0.04 }}
                         >
                           <span>{s}</span>
-                          <span className="text-foreground/30 transition-all group-hover:translate-x-0.5 group-hover:text-foreground">
-                            &rarr;
-                          </span>
+                          <Image
+                            src="/pixel-arrow.png"
+                            alt=""
+                            width={12}
+                            height={12}
+                            className="size-3 opacity-40 transition-all [image-rendering:pixelated] invert group-hover:translate-x-0.5 group-hover:opacity-100 dark:invert-0"
+                          />
                         </motion.button>
                       ))}
                     </div>
@@ -854,62 +909,60 @@ export function Chat({
         </button>
       </div>
 
-      {/* Mobile: full-screen centered modal when open */}
+      {/* Mobile: bottom sheet */}
       <AnimatePresence>
         {open && (
           <div className="lg:hidden">
             <motion.div
-              className="fixed inset-0 z-50 bg-white/60 backdrop-blur-sm"
+              className="fixed inset-0 z-[60] bg-background/70 backdrop-blur-md"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={close}
             />
 
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8"
-              onClick={close}
+            <motion.aside
+              ref={wrapperRef}
+              className="fixed bottom-0 left-0 right-0 z-[70]"
+              initial={reduced ? undefined : { opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 24 }}
+              transition={{ type: "spring", stiffness: 380, damping: 34 }}
             >
-              <motion.div
-                ref={wrapperRef}
-                className="relative w-full max-w-2xl"
-                onClick={(e) => e.stopPropagation()}
-                style={{ height: "min(80vh, 700px)" }}
-                initial={{ opacity: 0, scale: 0.97, y: 12 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.97, y: 12 }}
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              >
-                {!reduced && (
+              {!reduced && (
+                <motion.div
+                  className="pointer-events-none absolute left-0 right-0 -top-16 h-40"
+                  aria-hidden="true"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  style={{
+                    WebkitMaskImage:
+                      "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.9) 45%, rgba(0,0,0,1) 75%, rgba(0,0,0,1) 100%)",
+                    maskImage:
+                      "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.9) 45%, rgba(0,0,0,1) 75%, rgba(0,0,0,1) 100%)",
+                  }}
+                >
                   <motion.div
-                    className="pointer-events-none absolute -inset-4"
-                    aria-hidden="true"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2, ease: "easeOut" }}
-                  >
-                    <motion.div
-                      className="absolute inset-0 rounded-3xl opacity-75 blur-2xl dark:opacity-60"
-                      style={{
-                        backgroundImage:
-                          "radial-gradient(circle at 22% 18%, #6366f1 0%, transparent 55%), radial-gradient(circle at 78% 32%, #ec4899 0%, transparent 55%), radial-gradient(circle at 32% 78%, #3b82f6 0%, transparent 55%), radial-gradient(circle at 85% 82%, #a855f7 0%, transparent 55%)",
-                      }}
-                      animate={{ rotate: [0, 8, -6, 3, 0], scale: [1, 1.06, 0.96, 1.02, 1], x: [0, 8, -6, 4, 0], y: [0, -5, 7, -3, 0] }}
-                      transition={{
-                        rotate: { duration: 24, repeat: Infinity, ease: "easeInOut" },
-                        scale: { duration: 18, repeat: Infinity, ease: "easeInOut" },
-                        x: { duration: 21, repeat: Infinity, ease: "easeInOut" },
-                        y: { duration: 17, repeat: Infinity, ease: "easeInOut" },
-                      }}
-                    />
-                  </motion.div>
-                )}
-                <div className="relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-border bg-background text-foreground shadow-2xl">
-                  {panelUI}
-                </div>
-              </motion.div>
-            </div>
+                    className="absolute inset-0 rounded-t-3xl opacity-75 blur-2xl dark:opacity-60"
+                    style={{
+                      backgroundImage:
+                        "radial-gradient(circle at 18% 30%, #6366f1 0%, transparent 55%), radial-gradient(circle at 70% 20%, #ec4899 0%, transparent 55%), radial-gradient(circle at 40% 70%, #3b82f6 0%, transparent 55%), radial-gradient(circle at 88% 60%, #a855f7 0%, transparent 55%)",
+                    }}
+                    animate={{ scale: [1, 1.06, 0.96, 1.02, 1], x: [0, 12, -10, 5, 0], y: [0, -4, 6, -2, 0] }}
+                    transition={{
+                      scale: { duration: 18, repeat: Infinity, ease: "easeInOut" },
+                      x: { duration: 21, repeat: Infinity, ease: "easeInOut" },
+                      y: { duration: 17, repeat: Infinity, ease: "easeInOut" },
+                    }}
+                  />
+                </motion.div>
+              )}
+              <div className="relative flex h-[75vh] flex-col overflow-hidden rounded-t-2xl bg-background text-foreground shadow-2xl">
+                {panelUI}
+              </div>
+            </motion.aside>
           </div>
         )}
       </AnimatePresence>
@@ -953,7 +1006,7 @@ export function Chat({
               )}
               <motion.aside
                 ref={desktopAsideRef}
-                className="pointer-events-auto relative flex w-[340px] max-h-[calc(100vh-7rem)] flex-col overflow-hidden rounded-xl border border-border bg-background text-foreground shadow-lg"
+                className="pointer-events-auto relative flex w-[360px] max-h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-xl border border-border bg-background text-foreground shadow-lg xl:w-[420px]"
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.98 }}

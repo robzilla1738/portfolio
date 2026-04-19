@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import Image from "next/image";
-import { ArrowRight, ChevronRight, Mail, X } from "lucide-react";
+import { Mail, X } from "lucide-react";
 import { ProjectCard } from "@/components/project-card";
 import { VideoPreview } from "@/components/ui/video-preview";
 import { Chat } from "@/components/chat";
@@ -133,53 +133,87 @@ function ExperienceItem({
   const hasMore = Boolean(details || (highlights && highlights.length > 0));
   return (
     <motion.div
-      className="flex flex-col gap-2 pb-10 sm:pb-12"
+      className="grid grid-cols-[7rem_1fr] gap-x-6 gap-y-1 pb-10 sm:grid-cols-[9rem_1fr] sm:gap-x-10 sm:pb-12"
       initial={reduced ? undefined : { opacity: 0, y: 8 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.3, delay: index * 0.04 }}
     >
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4">
+      <span className="pt-0.5 text-xs tabular-nums text-muted-foreground">{period}</span>
+      <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 className="text-base font-medium text-foreground">{role}</h3>
           <span className="text-sm text-muted-foreground">· {company}</span>
         </div>
-        <span className="text-xs tabular-nums text-muted-foreground">{period}</span>
-      </div>
-      <p className="text-sm leading-relaxed text-foreground">
-        {highlight}
-      </p>
-      {hasMore && onShowDetails && (
-        <button
-          onClick={() =>
-            onShowDetails({
-              id: `exp-${company}`,
-              title: role,
-              subtitle: company,
-              meta: period,
-              body: details,
-              highlights,
-            })
-          }
-          className={`group/read flex items-center gap-1 self-start text-xs transition-colors ${
-            isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <span className="underline underline-offset-2">
-            {isActive ? "Hide" : "Read more"}
-          </span>
-          <ArrowRight
-            className={`size-3 transition-transform duration-200 ${
-              isActive ? "rotate-180" : "group-hover/read:translate-x-0.5"
+        <p className="text-sm leading-relaxed text-foreground">
+          {highlight}
+        </p>
+        {hasMore && onShowDetails && (
+          <button
+            onClick={() =>
+              onShowDetails({
+                id: `exp-${company}`,
+                title: role,
+                subtitle: company,
+                meta: period,
+                body: details,
+                highlights,
+              })
+            }
+            className={`group/read flex items-center gap-1.5 self-start text-sm transition-colors ${
+              isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
             }`}
-          />
-        </button>
-      )}
+          >
+            <span className="underline underline-offset-2">
+              {isActive ? "Hide" : "Read more"}
+            </span>
+            <Image
+              src="/pixel-arrow.png"
+              alt=""
+              width={12}
+              height={12}
+              className={`size-3.5 opacity-60 transition-transform duration-500 ease-out [image-rendering:pixelated] invert dark:invert-0 ${
+                isActive ? "rotate-90" : "group-hover/read:translate-x-0.5"
+              }`}
+            />
+          </button>
+        )}
+      </div>
     </motion.div>
   );
 }
 
-function ContactSection({ scroll }: { scroll: (delay?: number) => Record<string, unknown> }) {
+function ContactSection({
+  scroll,
+  onOpen,
+}: {
+  scroll: (delay?: number) => Record<string, unknown>;
+  onOpen: () => void;
+}) {
+  return (
+    <motion.section id="contact" className="flex flex-col gap-5" {...scroll()}>
+      <div className="flex flex-col gap-3">
+        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+          Get in Touch
+        </h2>
+        <p className="max-w-md text-sm text-foreground">
+          Looking for a dev role where I can build real products and go deep
+          on AI. If that sounds like your team, send me a message.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        onClick={onOpen}
+        className="self-start rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background transition-opacity hover:opacity-85"
+      >
+        Get in touch
+      </button>
+    </motion.section>
+  );
+}
+
+function ContactForm({ onClose }: { onClose: () => void }) {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [reason, setReason] = useState<string | null>(null);
@@ -209,18 +243,35 @@ function ContactSection({ scroll }: { scroll: (delay?: number) => Record<string,
   }
 
   return (
-    <motion.section
-      id="contact"
-      className="flex flex-col gap-5"
-      {...scroll()}
-    >
-      <div className="flex flex-col gap-3">
-        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
-          Get in Touch
-        </h2>
-        <p className="max-w-md text-sm text-foreground">
-          Looking for a dev role where I can build real products and go deep
-          on AI. If that sounds like your team, send me a message.
+    <>
+      <div className="flex items-start justify-between gap-4">
+        <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          Get in touch
+        </p>
+        <div className="-mt-1 flex items-center gap-2">
+          <span className="hidden items-center gap-1 whitespace-nowrap text-[10px] text-muted-foreground sm:flex">
+            Press
+            <kbd className="inline-flex h-4 items-center justify-center rounded border border-border bg-background px-1 font-sans text-[10px] text-foreground/70">
+              Esc
+            </kbd>
+            to close
+          </span>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="-mr-1 shrink-0 p-1 text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <X className="size-3.5" />
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-3">
+        <h3 className="text-lg font-medium leading-tight text-foreground">
+          Send me a message
+        </h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          I&apos;ll get back to you soon.
         </p>
       </div>
 
@@ -228,7 +279,7 @@ function ContactSection({ scroll }: { scroll: (delay?: number) => Record<string,
         {status === "sent" ? (
           <motion.div
             key="sent"
-            className="flex flex-col items-start gap-2 py-4"
+            className="mt-6 flex flex-col items-start gap-2 py-4"
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}
@@ -245,17 +296,17 @@ function ContactSection({ scroll }: { scroll: (delay?: number) => Record<string,
           <motion.form
             key="form"
             onSubmit={handleSubmit}
-            className="flex max-w-lg flex-col gap-3"
+            className="mt-5 flex flex-col gap-3"
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {reasons.map((r) => (
                 <button
                   key={r}
                   type="button"
                   onClick={() => setReason(reason === r ? null : r)}
-                  className={`rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                  className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
                     reason === r
                       ? "border-foreground bg-foreground text-background"
                       : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
@@ -266,14 +317,14 @@ function ContactSection({ scroll }: { scroll: (delay?: number) => Record<string,
               ))}
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-2">
               <input
                 type="text"
                 placeholder="Name"
                 required
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="rounded-sm border border-border bg-transparent px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground"
+                className="rounded-sm border border-border bg-transparent px-2.5 py-1.5 text-xs outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground"
               />
               <input
                 type="email"
@@ -281,7 +332,7 @@ function ContactSection({ scroll }: { scroll: (delay?: number) => Record<string,
                 required
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="rounded-sm border border-border bg-transparent px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground"
+                className="rounded-sm border border-border bg-transparent px-2.5 py-1.5 text-xs outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground"
               />
             </div>
 
@@ -291,14 +342,14 @@ function ContactSection({ scroll }: { scroll: (delay?: number) => Record<string,
               rows={4}
               value={form.message}
               onChange={(e) => setForm({ ...form, message: e.target.value })}
-              className="resize-none rounded-sm border border-border bg-transparent px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground"
+              className="resize-none rounded-sm border border-border bg-transparent px-2.5 py-1.5 text-xs outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground"
             />
 
             <div className="flex items-center gap-3">
               <button
                 type="submit"
                 disabled={status === "sending"}
-                className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background transition-opacity hover:opacity-85 disabled:opacity-50"
+                className="rounded-full bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-85 disabled:opacity-50"
               >
                 {status === "sending" ? "Sending..." : "Send"}
               </button>
@@ -309,7 +360,7 @@ function ContactSection({ scroll }: { scroll: (delay?: number) => Record<string,
           </motion.form>
         )}
       </AnimatePresence>
-    </motion.section>
+    </>
   );
 }
 
@@ -317,27 +368,32 @@ export default function Home() {
   const reduced = useReducedMotion();
   const [activeDetail, setActiveDetail] = useState<DetailSource | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
 
   const openDetail = (detail: DetailSource) => {
     setChatOpen(false);
+    setContactOpen(false);
     setActiveDetail((cur) => (cur?.id === detail.id ? null : detail));
   };
 
   const openChat = () => {
     setActiveDetail(null);
+    setContactOpen(false);
     setChatOpen(true);
+  };
+
+  const openContact = () => {
+    setActiveDetail(null);
+    setChatOpen(false);
+    setContactOpen(true);
   };
   const [activeSection, setActiveSection] = useState("about");
   const [alsoExpanded, setAlsoExpanded] = useState(false);
   const [alsoFilter, setAlsoFilter] = useState<AlsoCategory | null>(null);
+  const [socialsOpen, setSocialsOpen] = useState(false);
   const filteredAlso = alsoFilter
     ? ALSO_FAMILIAR.filter((item) => item.category === alsoFilter)
     : ALSO_FAMILIAR;
-  const [navContactOpen, setNavContactOpen] = useState(false);
-  const [navForm, setNavForm] = useState({ name: "", email: "", message: "" });
-  const [navFormStatus, setNavFormStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
-  const [navReason, setNavReason] = useState<string | null>(null);
-  const navContactRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const ids = ["about", "work", "experience", "contact"];
@@ -373,42 +429,12 @@ export default function Home() {
       if (e.key === "Escape") {
         setChatOpen(false);
         setActiveDetail(null);
+        setContactOpen(false);
       }
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, []);
-
-  useEffect(() => {
-    if (!navContactOpen) return;
-    function handleClick(e: MouseEvent) {
-      if (navContactRef.current && !navContactRef.current.contains(e.target as Node)) {
-        setNavContactOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [navContactOpen]);
-
-  async function handleNavContactSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setNavFormStatus("sending");
-    try {
-      const fullMessage = navReason ? `[${navReason}]\n\n${navForm.message}` : navForm.message;
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...navForm, message: fullMessage }),
-      });
-      if (!res.ok) throw new Error();
-      setNavFormStatus("sent");
-      setNavForm({ name: "", email: "", message: "" });
-      setNavReason(null);
-      setTimeout(() => { setNavContactOpen(false); setNavFormStatus("idle"); }, 2000);
-    } catch {
-      setNavFormStatus("error");
-    }
-  }
 
   const anim = (delay = 0) =>
     reduced
@@ -510,7 +536,7 @@ export default function Home() {
 
             if (videoSrc) {
               return (
-                <VideoPreview key={project.title} src={videoSrc} width={400} height={250}>
+                <VideoPreview key={project.title} src={videoSrc} width={280} height={175}>
                   <div>{card}</div>
                 </VideoPreview>
               );
@@ -544,8 +570,12 @@ export default function Home() {
               aria-expanded={alsoExpanded}
             >
               <span>Also familiar</span>
-              <ChevronRight
-                className={`size-3 transition-transform duration-200 ${alsoExpanded ? "rotate-90" : ""}`}
+              <Image
+                src="/pixel-arrow.png"
+                alt=""
+                width={12}
+                height={12}
+                className={`size-3 opacity-70 transition-transform duration-500 ease-out [image-rendering:pixelated] invert dark:invert-0 ${alsoExpanded ? "rotate-90" : ""}`}
               />
             </button>
             <AnimatePresence initial={false}>
@@ -609,7 +639,7 @@ export default function Home() {
               period: "2026 – Present",
               highlight: "Full-stack Bible study platform. Web and iOS from one codebase, with an AI-powered study canvas.",
               details:
-                "Solo-building a cross-platform Bible study product. One TypeScript codebase ships to web via Next.js and to iOS via Expo, with a shared tRPC API layer and a shared design system. The AI study canvas uses OpenAI tool-calling to generate six distinct visualization types straight from Scripture — timelines, genealogies, maps, cross-reference graphs, and more.",
+                "Solo-building a cross-platform Bible study product. One TypeScript codebase ships to web via Next.js and to iOS via Expo, with a shared tRPC API layer and a shared design system. The AI study canvas uses OpenAI tool-calling to generate six visualization types straight from Scripture: timelines, genealogies, maps, cross-reference graphs, and others.",
               highlights: [
                 "12 production integrations wired end-to-end: Clerk for auth, Stripe for web subscriptions, RevenueCat for iOS subscriptions, PostHog for product analytics, Sentry for error monitoring, Neon for Postgres, Cloudflare R2 for media",
                 "Real-time cross-platform subscription sync between Stripe and RevenueCat so a user upgrading on the web is unlocked on their iPhone in seconds",
@@ -622,9 +652,9 @@ export default function Home() {
               period: "2015 – Present",
               highlight: "Subscription design agency. Flat monthly pricing instead of per-project estimates.",
               details:
-                "The subscription design agency I ran for most of a decade before I learned to code. Flat monthly pricing — $1,499 to $1,899 — replacing the chaos of per-project estimates. Clients get unlimited design requests handled one at a time, with 1 to 2 day turnarounds and unlimited revisions.",
+                "The subscription design agency I ran for most of a decade before I learned to code. Flat monthly pricing, $1,499 to $1,899, instead of per-project estimates. Clients get unlimited design requests handled one at a time, with 1 to 2 day turnarounds and unlimited revisions.",
               highlights: [
-                "Scope covers websites, brand identity, logos, and video under one subscription — full creative direction, not just production work",
+                "Scope covers websites, brand identity, logos, and video under one subscription. Creative direction, not just production work",
                 "Built the ops playbook and tooling that actually delivers on 'unlimited, 1–2 day, unlimited revisions' without burning out the team",
                 "Long-tail client retention by treating design as an ongoing relationship rather than a one-off deliverable",
                 "This is the business that made me want to learn to code. I kept designing things I couldn't ship myself and handing off to developers who missed the point",
@@ -636,7 +666,7 @@ export default function Home() {
               period: "2023 – 2026",
               highlight: "Strategy and partnerships for a nonprofit operating community hubs across six countries.",
               details:
-                "Strategy and partnership development for a nonprofit operating CarePoints — neighborhood-based community hubs that combine physical care, mental wellness, and spiritual formation in one location. Scope ranged from fundraising strategy to cross-program alignment to partner relationship design.",
+                "Strategy and partnership development for a nonprofit operating CarePoints, neighborhood-based community hubs that combine physical care, mental wellness, and spiritual formation in one location. Scope covered fundraising strategy, cross-program alignment, and partner relationship design.",
               highlights: [
                 "Scaled programs touching 16,600+ children across 61 CarePoints in 6 countries",
                 "Built partnerships across corporate, foundation, and grassroots donor pipelines",
@@ -678,11 +708,11 @@ export default function Home() {
               period: "2020 (COVID)",
               highlight: "ML Platform work at an AI genomics startup focused on early cancer detection.",
               details:
-                "AI genomics startup on a mission to detect cancer early through blood-based multi-omics. I was embedded on the ML Platform team. Work paused when COVID shut down wet-lab operations and reshuffled priorities across the company.",
+                "AI genomics startup focused on early cancer detection through blood-based multi-omics. I was embedded on the ML Platform team. Work paused when COVID shut down wet-lab operations and reshuffled priorities across the company.",
               highlights: [
                 "Built ingestion and featurization pipelines for petabyte-scale genomic datasets",
                 "Contributed to an internal ML experimentation platform so computational researchers could train models without hand-rolling infrastructure",
-                "Context: $238M Series B at the time, mission-driven team working at the intersection of ML and cancer biology",
+                "Context: $238M Series B at the time. Team working across ML and cancer biology",
               ],
             },
             {
@@ -694,7 +724,7 @@ export default function Home() {
                 "Two jobs in one. Started as the solo internal recruiter during a hiring surge, then moved into technical PM on the production floor as the recruiting team came online behind me.",
               highlights: [
                 "Closed 42 P0/P1 roles across 2 quarters as the sole internal recruiter",
-                "Partnered with the CEO on executive searches — VP of People, VP of Product, VP of Business Operations, VP of Operations — all placed",
+                "Partnered with the CEO on executive searches. VP of People, VP of Product, VP of Business Operations, VP of Operations. All placed",
                 "Managed 7+ recruiting agencies and 10+ hiring managers across C, VP, and Director levels",
                 "As Technical PM, managed PCB assembly production for aerospace (NASA, SpaceX, Blue Origin), defense (Raytheon, Lockheed Martin), medical devices, and autonomous vehicles (Tesla, Zoox)",
                 "Cross-functional coordination across Software, Operations, Finance, Sales, Manufacturing, and Product teams",
@@ -719,7 +749,7 @@ export default function Home() {
       </section>
 
       {/* Contact */}
-      <ContactSection scroll={scroll} />
+      <ContactSection scroll={scroll} onOpen={openContact} />
 
       {/* Navbar */}
       <motion.nav
@@ -734,7 +764,6 @@ export default function Home() {
             { id: "about", label: "About" },
             { id: "work", label: "Projects" },
             { id: "experience", label: "Experience" },
-            { id: "contact", label: "Contact" },
           ].map((link) => (
             <a
               key={link.id}
@@ -746,139 +775,80 @@ export default function Home() {
           ))}
           <button
             type="button"
+            onClick={openContact}
+            className={`hidden text-sm transition-colors hover:text-foreground sm:block ${contactOpen ? "text-foreground" : "text-muted-foreground"}`}
+          >
+            Contact
+          </button>
+          <button
+            type="button"
             data-chat-opener
             onClick={openChat}
             className={`hidden text-sm transition-colors hover:text-foreground sm:block ${chatOpen ? "text-foreground" : "text-muted-foreground"}`}
           >
             Ask
           </button>
-          <div className="ml-2 flex items-center gap-3 sm:ml-4">
-            {SOCIALS.map((s) =>
-              s.label === "Email" ? (
-                <div key={s.label} className="relative" ref={navContactRef}>
-                  <button
-                    onClick={() => {
-                      if (window.innerWidth < 640) {
-                        document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
-                        return;
-                      }
-                      setNavContactOpen(!navContactOpen);
-                      if (navFormStatus === "sent") { setNavFormStatus("idle"); }
-                    }}
-                    aria-label="Email"
-                    className={`p-1 transition-colors hover:text-foreground ${navContactOpen ? "text-foreground" : "text-muted-foreground"}`}
-                  >
-                    {s.icon}
-                  </button>
-                  <AnimatePresence>
-                    {navContactOpen && (
-                      <motion.div
-                        className="absolute right-0 top-full mt-3 w-80 rounded-md border border-border bg-background p-4 shadow-md"
-                        initial={{ opacity: 0, y: -4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -4 }}
-                        transition={{ duration: 0.15 }}
-                      >
-                        <AnimatePresence mode="wait">
-                          {navFormStatus === "sent" ? (
-                            <motion.div
-                              key="sent"
-                              className="flex flex-col items-center gap-2 py-4"
-                              initial={{ opacity: 0, y: 4 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.2 }}
-                            >
-                              <div className="flex size-8 items-center justify-center rounded-full bg-foreground text-background">
-                                <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                              </div>
-                              <p className="text-xs text-muted-foreground">Sent!</p>
-                            </motion.div>
-                          ) : (
-                            <motion.form
-                              key="form"
-                              onSubmit={handleNavContactSubmit}
-                              className="flex flex-col gap-3"
-                              initial={{ opacity: 0, y: 4 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -4 }}
-                              transition={{ duration: 0.2 }}
-                            >
-                              <div className="flex flex-wrap gap-1.5">
-                                {["Hiring", "Freelance", "Collab", "Hello"].map((r) => (
-                                  <button
-                                    key={r}
-                                    type="button"
-                                    onClick={() => setNavReason(navReason === r ? null : r)}
-                                    className={`rounded-full border px-2.5 py-1 text-[11px] transition-colors ${
-                                      navReason === r
-                                        ? "border-foreground bg-foreground text-background"
-                                        : "border-border text-muted-foreground hover:text-foreground"
-                                    }`}
-                                  >
-                                    {r}
-                                  </button>
-                                ))}
-                              </div>
-                              <div className="grid grid-cols-2 gap-2">
-                                <input
-                                  type="text"
-                                  placeholder="Name"
-                                  required
-                                  value={navForm.name}
-                                  onChange={(e) => setNavForm({ ...navForm, name: e.target.value })}
-                                  className="rounded-sm border border-border bg-transparent px-2.5 py-1.5 text-xs outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground"
-                                />
-                                <input
-                                  type="email"
-                                  placeholder="Email"
-                                  required
-                                  value={navForm.email}
-                                  onChange={(e) => setNavForm({ ...navForm, email: e.target.value })}
-                                  className="rounded-sm border border-border bg-transparent px-2.5 py-1.5 text-xs outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground"
-                                />
-                              </div>
-                              <textarea
-                                placeholder="Message..."
-                                required
-                                rows={3}
-                                value={navForm.message}
-                                onChange={(e) => setNavForm({ ...navForm, message: e.target.value })}
-                                className="resize-none rounded-sm border border-border bg-transparent px-2.5 py-1.5 text-xs outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground"
-                              />
-                              <div className="flex items-center justify-between">
-                                {navFormStatus === "error" ? (
-                                  <span className="text-[11px] text-red-500">Failed. Retry.</span>
-                                ) : <span />}
-                                <button
-                                  type="submit"
-                                  disabled={navFormStatus === "sending"}
-                                  className="rounded-full bg-foreground px-4 py-1.5 text-xs font-medium text-background transition-opacity hover:opacity-85 disabled:opacity-50"
-                                >
-                                  {navFormStatus === "sending" ? "..." : "Send"}
-                                </button>
-                              </div>
-                            </motion.form>
-                          )}
-                        </AnimatePresence>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ) : (
-                <a
-                  key={s.label}
-                  href={s.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={s.label}
-                  className="p-1 text-muted-foreground transition-colors hover:text-foreground"
+          <span aria-hidden="true" className="hidden h-4 w-px bg-border sm:block" />
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setSocialsOpen((v) => !v)}
+              aria-expanded={socialsOpen}
+              className={`flex items-center gap-1.5 text-sm transition-colors hover:text-foreground ${socialsOpen ? "text-foreground" : "text-muted-foreground"}`}
+            >
+              Connect
+              <Image
+                src="/pixel-arrow.png"
+                alt=""
+                width={12}
+                height={12}
+                className={`size-3 opacity-80 transition-transform duration-500 ease-out [image-rendering:pixelated] invert dark:invert-0 ${socialsOpen ? "rotate-90" : ""}`}
+              />
+            </button>
+            <AnimatePresence initial={false}>
+              {socialsOpen && (
+                <motion.div
+                  className="flex items-center gap-3 overflow-hidden"
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: "auto" }}
+                  exit={{ opacity: 0, width: 0 }}
+                  transition={{ duration: 0.22, ease: "easeOut" }}
                 >
-                  {s.icon}
-                </a>
-              )
-            )}
+                  {SOCIALS.map((s, i) =>
+                    s.label === "Email" ? (
+                      <motion.button
+                        key={s.label}
+                        type="button"
+                        onClick={openContact}
+                        aria-label="Email"
+                        className={`shrink-0 p-1 transition-colors hover:text-foreground ${contactOpen ? "text-foreground" : "text-muted-foreground"}`}
+                        initial={{ opacity: 0, x: -6 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -6 }}
+                        transition={{ duration: 0.2, delay: 0.06 + i * 0.04 }}
+                      >
+                        {s.icon}
+                      </motion.button>
+                    ) : (
+                      <motion.a
+                        key={s.label}
+                        href={s.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={s.label}
+                        className="shrink-0 p-1 text-muted-foreground transition-colors hover:text-foreground"
+                        initial={{ opacity: 0, x: -6 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -6 }}
+                        transition={{ duration: 0.2, delay: 0.06 + i * 0.04 }}
+                      >
+                        {s.icon}
+                      </motion.a>
+                    )
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </motion.nav>
@@ -893,7 +863,7 @@ export default function Home() {
         }}
       >
         <AnimatePresence>
-          {!chatOpen && !activeDetail && (
+          {!chatOpen && !activeDetail && !contactOpen && (
             <motion.button
               type="button"
               data-chat-opener
@@ -911,7 +881,7 @@ export default function Home() {
               </span>
               <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 Press
-                <kbd className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded border border-border bg-background px-1.5 font-sans text-[11px] text-foreground/70 transition-colors group-hover:border-foreground/40 group-hover:text-foreground">
+                <kbd className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded border border-border bg-background px-1.5 font-sans text-[10px] text-foreground/70 transition-colors group-hover:border-foreground/40 group-hover:text-foreground">
                   /
                 </kbd>
                 to start
@@ -922,7 +892,7 @@ export default function Home() {
       </div>
 
       {/* Chat */}
-      <Chat open={chatOpen} onOpenChange={setChatOpen} hidden={!!activeDetail} />
+      <Chat open={chatOpen} onOpenChange={setChatOpen} hidden={!!activeDetail || contactOpen} />
 
       {/* Floating detail panel */}
       <AnimatePresence>
@@ -933,13 +903,22 @@ export default function Home() {
                 <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
                   Details
                 </p>
-                <button
-                  onClick={() => setActiveDetail(null)}
-                  aria-label="Close details"
-                  className="-mr-1 -mt-1 shrink-0 p-1 text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <X className="size-3.5" />
-                </button>
+                <div className="-mt-1 flex items-center gap-2">
+                  <span className="hidden items-center gap-1 whitespace-nowrap text-[10px] text-muted-foreground sm:flex">
+                    Press
+                    <kbd className="inline-flex h-4 items-center justify-center rounded border border-border bg-background px-1 font-sans text-[10px] text-foreground/70">
+                      Esc
+                    </kbd>
+                    to close
+                  </span>
+                  <button
+                    onClick={() => setActiveDetail(null)}
+                    aria-label="Close details"
+                    className="-mr-1 shrink-0 p-1 text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                </div>
               </div>
 
               <div className="mt-3">
@@ -954,7 +933,7 @@ export default function Home() {
 
               {activeDetail.body && (
                 <motion.p
-                  className="mt-5 text-[13px] leading-[1.65] text-foreground"
+                  className="mt-5 text-sm leading-relaxed text-foreground"
                   initial={reduced ? undefined : { opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.25, delay: 0.08 }}
@@ -964,7 +943,7 @@ export default function Home() {
               )}
 
               {activeDetail.highlights && activeDetail.highlights.length > 0 && (
-                <ul className={`${activeDetail.body ? "mt-6" : "mt-5"} space-y-3 text-[13px] leading-[1.55] text-foreground`}>
+                <ul className={`${activeDetail.body ? "mt-6" : "mt-5"} space-y-3 text-sm leading-relaxed text-foreground`}>
                   {activeDetail.highlights.map((h, idx) => (
                     <motion.li
                       key={h}
@@ -985,7 +964,7 @@ export default function Home() {
                   <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
                     Tech
                   </p>
-                  <p className="mt-2 text-[12px] leading-[1.6] text-muted-foreground">
+                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
                     {activeDetail.tech.join(" · ")}
                   </p>
                 </div>
@@ -1085,7 +1064,7 @@ export default function Home() {
                   )}
                   <motion.aside
                     key={`panel-${activeDetail.title}`}
-                    className="pointer-events-auto relative w-[340px] max-h-[calc(100vh-7rem)] overflow-y-auto rounded-2xl border border-border bg-background p-6 shadow-lg"
+                    className="pointer-events-auto relative w-[360px] max-h-[calc(100vh-8rem)] overflow-y-auto rounded-2xl border border-border bg-background p-6 shadow-lg xl:w-[420px]"
                     initial={reduced ? undefined : { opacity: 0, scale: 0.98 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.98 }}
@@ -1098,6 +1077,114 @@ export default function Home() {
             </>
           );
         })()}
+      </AnimatePresence>
+
+      {/* Contact popout */}
+      <AnimatePresence>
+        {contactOpen && (
+          <>
+            {/* Mobile backdrop */}
+            <motion.div
+              className="fixed inset-0 z-[60] bg-background/70 backdrop-blur-md lg:hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setContactOpen(false)}
+            />
+
+            {/* Mobile bottom sheet */}
+            <motion.aside
+              key="contact-sheet"
+              className="fixed bottom-0 left-0 right-0 z-[70] lg:hidden"
+              initial={reduced ? undefined : { opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 24 }}
+              transition={{ type: "spring", stiffness: 380, damping: 34 }}
+            >
+              {!reduced && (
+                <motion.div
+                  className="pointer-events-none absolute left-0 right-0 -top-16 h-40"
+                  aria-hidden="true"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  style={{
+                    WebkitMaskImage:
+                      "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.9) 45%, rgba(0,0,0,1) 75%, rgba(0,0,0,1) 100%)",
+                    maskImage:
+                      "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.9) 45%, rgba(0,0,0,1) 75%, rgba(0,0,0,1) 100%)",
+                  }}
+                >
+                  <motion.div
+                    className="absolute inset-0 rounded-t-3xl opacity-75 blur-2xl dark:opacity-60"
+                    style={{
+                      backgroundImage:
+                        "radial-gradient(circle at 18% 30%, #6366f1 0%, transparent 55%), radial-gradient(circle at 70% 20%, #ec4899 0%, transparent 55%), radial-gradient(circle at 40% 70%, #3b82f6 0%, transparent 55%), radial-gradient(circle at 88% 60%, #a855f7 0%, transparent 55%)",
+                    }}
+                    animate={{ scale: [1, 1.06, 0.96, 1.02, 1], x: [0, 12, -10, 5, 0], y: [0, -4, 6, -2, 0] }}
+                    transition={{
+                      scale: { duration: 18, repeat: Infinity, ease: "easeInOut" },
+                      x: { duration: 21, repeat: Infinity, ease: "easeInOut" },
+                      y: { duration: 17, repeat: Infinity, ease: "easeInOut" },
+                    }}
+                  />
+                </motion.div>
+              )}
+              <div className="relative max-h-[85vh] overflow-y-auto rounded-t-2xl bg-background px-6 pt-8 pb-[calc(env(safe-area-inset-bottom,0px)+4rem)] shadow-2xl">
+                <ContactForm onClose={() => setContactOpen(false)} />
+              </div>
+            </motion.aside>
+
+            {/* Desktop side-rail */}
+            <div
+              className="pointer-events-none fixed z-40 hidden lg:block"
+              style={{
+                left: "calc(50vw + 21rem)",
+                top: "calc(50% + 1.75rem)",
+                transform: "translate(-50%, -50%)",
+              }}
+            >
+              <div className="relative">
+                {!reduced && (
+                  <motion.div
+                    className="pointer-events-none absolute -inset-4"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    aria-hidden="true"
+                  >
+                    <motion.div
+                      className="absolute inset-0 rounded-3xl opacity-75 blur-2xl dark:opacity-60"
+                      style={{
+                        backgroundImage:
+                          "radial-gradient(circle at 22% 18%, #6366f1 0%, transparent 55%), radial-gradient(circle at 78% 32%, #ec4899 0%, transparent 55%), radial-gradient(circle at 32% 78%, #3b82f6 0%, transparent 55%), radial-gradient(circle at 85% 82%, #a855f7 0%, transparent 55%)",
+                      }}
+                      animate={{ rotate: [0, 8, -6, 3, 0], scale: [1, 1.06, 0.96, 1.02, 1], x: [0, 8, -6, 4, 0], y: [0, -5, 7, -3, 0] }}
+                      transition={{
+                        rotate: { duration: 24, repeat: Infinity, ease: "easeInOut" },
+                        scale: { duration: 18, repeat: Infinity, ease: "easeInOut" },
+                        x: { duration: 21, repeat: Infinity, ease: "easeInOut" },
+                        y: { duration: 17, repeat: Infinity, ease: "easeInOut" },
+                      }}
+                    />
+                  </motion.div>
+                )}
+                <motion.aside
+                  key="contact-panel"
+                  className="pointer-events-auto relative w-[360px] max-h-[calc(100vh-8rem)] overflow-y-auto rounded-2xl border border-border bg-background p-6 shadow-lg xl:w-[420px]"
+                  initial={reduced ? undefined : { opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 380, damping: 34 }}
+                >
+                  <ContactForm onClose={() => setContactOpen(false)} />
+                </motion.aside>
+              </div>
+            </div>
+          </>
+        )}
       </AnimatePresence>
     </div>
   );

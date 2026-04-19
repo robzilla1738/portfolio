@@ -51,8 +51,14 @@ export function VideoPreview({
       if (hovered) setHovered(false);
     }
 
-    mouseX.set(e.clientX - width / 2);
-    mouseY.set(e.clientY - height - 20);
+    const padding = 16;
+    const offset = 14;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const x = Math.min(Math.max(padding, e.clientX + offset), vw - width - padding);
+    const y = Math.min(Math.max(padding, e.clientY + offset), vh - height - padding);
+    mouseX.set(x);
+    mouseY.set(y);
   };
 
   return (
