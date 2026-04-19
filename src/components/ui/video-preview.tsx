@@ -38,6 +38,8 @@ export function VideoPreview({
     if (hovered && videoRef.current) {
       videoRef.current.currentTime = 0;
       videoRef.current.play().catch(() => {});
+    } else if (!hovered && videoRef.current) {
+      videoRef.current.pause();
     }
   }, [hovered]);
 
@@ -61,6 +63,8 @@ export function VideoPreview({
     mouseY.set(y);
   };
 
+  const showPreview = hovered && !disabled && hasPointer;
+
   return (
     <div
       ref={containerRef}
@@ -69,38 +73,45 @@ export function VideoPreview({
     >
       {children}
 
-      <AnimatePresence>
-        {hovered && !disabled && hasPointer && (
-          <motion.div
-            className="pointer-events-none fixed z-50 overflow-hidden rounded-xl border border-white/10 shadow-2xl"
-            style={{
-              left: springX,
-              top: springY,
-              width,
-              height,
-            }}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.85 }}
-            transition={{ type: "spring", stiffness: 400, damping: 28 }}
-          >
-            {src ? (
-              <video
-                ref={videoRef}
-                autoPlay
-                loop
-                muted
-                playsInline
-                preload="auto"
-                src={src}
-                className="h-full w-full object-cover"
-              />
-            ) : preview ? (
+      {/* Persistent preload: video stays in the DOM so metadata + first frame
+          are cached before hover. Visibility is toggled via opacity. */}
+      {src && hasPointer && !disabled && (
+        <motion.video
+          ref={videoRef}
+          loop
+          muted
+          playsInline
+          preload="metadata"
+          src={src}
+          aria-hidden="true"
+          tabIndex={-1}
+          className="pointer-events-none fixed z-50 overflow-hidden rounded-xl border border-white/10 object-cover shadow-2xl"
+          style={{ left: springX, top: springY, width, height }}
+          animate={{
+            opacity: showPreview ? 1 : 0,
+            scale: showPreview ? 1 : 0.92,
+          }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+        />
+      )}
+
+      {/* Non-video preview (unchanged): only render on hover */}
+      {!src && preview && (
+        <AnimatePresence>
+          {showPreview && (
+            <motion.div
+              className="pointer-events-none fixed z-50 overflow-hidden rounded-xl border border-white/10 shadow-2xl"
+              style={{ left: springX, top: springY, width, height }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.85 }}
+              transition={{ type: "spring", stiffness: 400, damping: 28 }}
+            >
               <div className="h-full w-full">{preview}</div>
-            ) : null}
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
     </div>
   );
 }
