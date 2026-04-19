@@ -34,6 +34,8 @@ const PRIMARY_STACK = [
 const ALSO_FAMILIAR: { name: string; category: AlsoCategory }[] = [
   { name: "RAG Pipelines", category: "AI / ML" },
   { name: "Python", category: "AI / ML" },
+  { name: "AI SDK", category: "AI / ML" },
+  { name: "AI Gateway", category: "AI / ML" },
   { name: "QLoRA Fine-Tuning", category: "AI / ML" },
   { name: "Unsloth", category: "AI / ML" },
   { name: "HuggingFace", category: "AI / ML" },
