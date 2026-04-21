@@ -514,6 +514,7 @@ export default function Home() {
               "svvarm": "/svvarm-demo.mp4",
               "Memorwise": "/memorwise-promo.mp4",
               "Fieldtrip": "/fieldtrip-demo.mp4",
+              "HTMLshop": "/htmlshop-demo.mp4",
             };
             const videoSrc = videoMap[project.title];
 
