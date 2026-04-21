@@ -11,6 +11,9 @@ import Image from "next/image";
 import { Send, Mic, Volume2, VolumeOff, Square, Loader2, X } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useSound } from "@web-kits/audio/react";
+import { SOUNDS } from "@/lib/sounds";
+
 
 // --- Live Waveform (scrolling bars + timer) ---
 
@@ -137,6 +140,7 @@ export function Chat({
   hidden?: boolean;
 }) {
   const reduced = useReducedMotion();
+  const playSend = useSound(SOUNDS.send);
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
   const setOpen = (v: boolean) => {
@@ -582,6 +586,7 @@ async function startRecording() {
     text = text.trim();
     if (!text || loading) return;
 
+    playSend();
     const userMsg: Message = { role: "user", content: text };
     const next = [...messages, userMsg];
     shouldScrollRef.current = true;

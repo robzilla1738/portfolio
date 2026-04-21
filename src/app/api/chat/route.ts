@@ -9,10 +9,10 @@ const SYSTEM_PROMPT = `You are an AI assistant embedded on Robert Courson's port
 
 Robert Courson is a full-stack developer with an AI specialty. He ships production apps end-to-end: web, mobile, backend, infrastructure. He also fine-tunes LLMs and builds RAG pipelines. Before engineering, he spent 10 years in design (brand strategy, creative direction, running a design agency), so he builds things that actually work for users. Contact: robertcourson96@gmail.com, GitHub: github.com/robzilla1738, LinkedIn: linkedin.com/in/robertcourson
 
-His current main project is Rhema, a full-stack Bible study platform with web and iOS apps. Other projects include Memorwise (local-first NotebookLM alternative) and svvarm (a Claude Code design director plugin).
+His current main project is Rhema, a full-stack Bible study platform with web and iOS apps. Other projects on the site: Memorwise (local-first NotebookLM alternative), svvarm (a Claude Code design director plugin), HTMLshop (local visual editor for Claude-generated HTML designs), Fieldtrip (his pre-code subscription design business), and GemmaBible:E4B (a fine-tuned theological LLM, also published as "BibleAI" on HuggingFace and Ollama).
 
 BIBLICAL AI MODEL (the one people ask about most — describe it with the full weight of what it is):
-Robert built **BibleAI**, a Gemma 4 E4B model refined for Bible study, theology, church history, and faith Q&A. To his knowledge, the curated biblical-scholarship corpus underneath it is the most rigorous dataset of its kind assembled outside of the frontier AI labs. Published on [HuggingFace](https://huggingface.co/rhemabible/BibleAI) and [Ollama](https://ollama.com/robzilla/bibleai) (as \`bibleaiq8\` and \`bibleaibf16\`).
+Robert built **GemmaBible:E4B** (published as **BibleAI** on HuggingFace and Ollama), a Gemma 4 E4B model refined for Bible study, theology, church history, and faith Q&A. To his knowledge, the curated biblical-scholarship corpus underneath it is the most rigorous dataset of its kind assembled outside of the frontier AI labs. Published on [HuggingFace](https://huggingface.co/rhemabible/BibleAI) and [Ollama](https://ollama.com/robzilla/bibleai) (as \`bibleaiq8\` and \`bibleaibf16\`).
 
 The full training pipeline is CPT → SFT → DPO — three stages most fine-tunes skip:
 
@@ -61,7 +61,7 @@ const tools = [
       parameters: {
         type: "object" as const,
         properties: {
-          name: { type: "string" as const, description: "Project name: Rhema, Memorwise, svvarm, Fieldtrip, BibleAI:7b, or GemmaBible:E4B" },
+          name: { type: "string" as const, description: "Project name: Rhema, Memorwise, svvarm, Fieldtrip, HTMLshop, or GemmaBible:E4B (also accepts 'BibleAI' as an alias for GemmaBible:E4B)" },
         },
         required: ["name"],
       },
@@ -105,7 +105,12 @@ function executeTool(name: string, args: Record<string, string>): unknown {
 
     case "get_project_details": {
       const q = (args.name || "").toLowerCase().trim();
-      const project = projects.find((p) => p.title.toLowerCase() === q);
+      // "BibleAI" is the published-model alias for the GemmaBible:E4B project.
+      const normalized = /^bibleai/.test(q) ? "gemmabible:e4b" : q;
+      const project =
+        projects.find((p) => p.title.toLowerCase() === normalized) ||
+        projects.find((p) => p.title.toLowerCase().includes(normalized)) ||
+        projects.find((p) => normalized.includes(p.title.toLowerCase()));
       if (!project) return { error: `Not found. Available: ${projects.map((p) => p.title).join(", ")}` };
       return {
         title: project.title,
@@ -120,12 +125,13 @@ function executeTool(name: string, args: Record<string, string>): unknown {
 
     case "get_tech_stack":
       return {
-        ai_ml: ["LLM Integration", "QLoRA Fine-Tuning", "RAG Pipelines", "LangChain", "LanceDB", "ChromaDB", "HuggingFace", "Ollama", "Unsloth", "Weights & Biases", "Python"],
-        infrastructure: ["Vercel", "Cloudflare R2", "Clerk", "Stripe", "Square", "RevenueCat", "PostHog", "Sentry", "Mailgun"],
-        design: ["Brand Strategy", "UI/UX", "Design Systems", "Creative Direction", "Adobe Creative Cloud", "Figma", "Midjourney", "Higgsfield", "Runway"],
-        backend: ["Node.js", "tRPC", "Drizzle ORM", "Postgres", "Supabase", "Neon", "Firebase", "SQLite"],
+        primary: ["Next.js", "React", "TypeScript", "Tailwind CSS", "Expo", "Node.js", "tRPC", "Postgres", "AI SDK", "AI Gateway", "LLM Integration"],
+        ai_ml: ["LLM Integration", "AI SDK", "AI Gateway", "RAG Pipelines", "QLoRA Fine-Tuning", "Unsloth", "HuggingFace", "Ollama", "LanceDB", "ChromaDB", "LangChain", "Weights & Biases", "Python"],
         frontend: ["Next.js", "React", "TypeScript", "Tailwind CSS", "Framer Motion", "shadcn/ui"],
+        backend: ["Node.js", "tRPC", "Drizzle ORM", "Neon Postgres", "Supabase"],
         mobile: ["Expo", "React Native", "Swift"],
+        infrastructure: ["Vercel", "Cloudflare R2", "Clerk", "Stripe", "RevenueCat", "PostHog", "Sentry", "Mailgun"],
+        design: ["Figma", "Adobe Creative Cloud", "Midjourney", "Runway", "Brand Strategy", "UI/UX", "Design Systems", "Creative Direction"],
       };
 
     case "get_career_timeline":

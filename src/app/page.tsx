@@ -3,10 +3,13 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import Image from "next/image";
-import { Mail, X } from "lucide-react";
+import { Mail, Volume2, VolumeX, X } from "lucide-react";
+import { useSound } from "@web-kits/audio/react";
 import { ProjectCard } from "@/components/project-card";
 import { VideoPreview } from "@/components/ui/video-preview";
 import { Chat } from "@/components/chat";
+import { useSoundSettings } from "@/components/sound-provider";
+import { SOUNDS } from "@/lib/sounds";
 import { projects, type Project } from "@/data/projects";
 
 interface DetailSource {
@@ -108,6 +111,26 @@ const SOCIALS = [
   },
 ];
 
+
+function SoundToggle() {
+  const { enabled, toggle } = useSoundSettings();
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={enabled ? "Mute sounds" : "Unmute sounds"}
+      aria-pressed={enabled}
+      title={enabled ? "Sounds on" : "Sounds off"}
+      className="p-1 text-muted-foreground transition-colors hover:text-foreground"
+    >
+      {enabled ? (
+        <Volume2 className="size-4" />
+      ) : (
+        <VolumeX className="size-4" />
+      )}
+    </button>
+  );
+}
 
 function ExperienceItem({
   role,
@@ -215,7 +238,13 @@ function ContactSection({
   );
 }
 
-function ContactForm({ onClose }: { onClose: () => void }) {
+function ContactForm({
+  onClose,
+  onSuccess,
+}: {
+  onClose: () => void;
+  onSuccess?: () => void;
+}) {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [reason, setReason] = useState<string | null>(null);
@@ -239,6 +268,7 @@ function ContactForm({ onClose }: { onClose: () => void }) {
       setStatus("sent");
       setForm({ name: "", email: "", message: "" });
       setReason(null);
+      onSuccess?.();
     } catch {
       setStatus("error");
     }
@@ -372,22 +402,40 @@ export default function Home() {
   const [chatOpen, setChatOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
 
+  const playOpen = useSound(SOUNDS.open);
+  const playClose = useSound(SOUNDS.close);
+  const playClick = useSound(SOUNDS.click);
+  const playSuccess = useSound(SOUNDS.success);
+
   const openDetail = (detail: DetailSource) => {
     setChatOpen(false);
     setContactOpen(false);
-    setActiveDetail((cur) => (cur?.id === detail.id ? null : detail));
+    setActiveDetail((cur) => {
+      const toggling = cur?.id === detail.id;
+      (toggling ? playClose : playClick)();
+      return toggling ? null : detail;
+    });
   };
 
   const openChat = () => {
     setActiveDetail(null);
     setContactOpen(false);
+    if (!chatOpen) playOpen();
     setChatOpen(true);
   };
 
   const openContact = () => {
     setActiveDetail(null);
     setChatOpen(false);
+    if (!contactOpen) playOpen();
     setContactOpen(true);
+  };
+
+  const closeAll = () => {
+    if (chatOpen || contactOpen || activeDetail) playClose();
+    setChatOpen(false);
+    setActiveDetail(null);
+    setContactOpen(false);
   };
   const [activeSection, setActiveSection] = useState("about");
   const [alsoExpanded, setAlsoExpanded] = useState(false);
@@ -429,14 +477,13 @@ export default function Home() {
         openChat();
       }
       if (e.key === "Escape") {
-        setChatOpen(false);
-        setActiveDetail(null);
-        setContactOpen(false);
+        closeAll();
       }
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatOpen, contactOpen, activeDetail]);
 
   const anim = (delay = 0) =>
     reduced
@@ -791,6 +838,7 @@ export default function Home() {
           >
             Ask
           </button>
+          <SoundToggle />
           <span aria-hidden="true" className="hidden h-4 w-px bg-border sm:block" />
           <div className="flex items-center gap-3">
             <button
@@ -895,7 +943,14 @@ export default function Home() {
       </div>
 
       {/* Chat */}
-      <Chat open={chatOpen} onOpenChange={setChatOpen} hidden={!!activeDetail || contactOpen} />
+      <Chat
+        open={chatOpen}
+        onOpenChange={(v) => {
+          if (!v && chatOpen) playClose();
+          setChatOpen(v);
+        }}
+        hidden={!!activeDetail || contactOpen}
+      />
 
       {/* Floating detail panel */}
       <AnimatePresence>
@@ -1135,7 +1190,13 @@ export default function Home() {
                 </motion.div>
               )}
               <div className="relative max-h-[85vh] overflow-y-auto rounded-t-2xl bg-background px-6 pt-8 pb-[calc(env(safe-area-inset-bottom,0px)+4rem)] shadow-2xl">
-                <ContactForm onClose={() => setContactOpen(false)} />
+                <ContactForm
+                  onClose={() => {
+                    playClose();
+                    setContactOpen(false);
+                  }}
+                  onSuccess={playSuccess}
+                />
               </div>
             </motion.aside>
 
@@ -1182,7 +1243,13 @@ export default function Home() {
                   exit={{ opacity: 0, scale: 0.98 }}
                   transition={{ type: "spring", stiffness: 380, damping: 34 }}
                 >
-                  <ContactForm onClose={() => setContactOpen(false)} />
+                  <ContactForm
+                  onClose={() => {
+                    playClose();
+                    setContactOpen(false);
+                  }}
+                  onSuccess={playSuccess}
+                />
                 </motion.aside>
               </div>
             </div>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { SoundProvider } from "@/components/sound-provider";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -143,7 +144,9 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
         />
-        <TooltipProvider>{children}</TooltipProvider>
+        <SoundProvider>
+          <TooltipProvider>{children}</TooltipProvider>
+        </SoundProvider>
       </body>
     </html>
   );
