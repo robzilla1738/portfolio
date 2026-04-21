@@ -709,12 +709,12 @@ export default function Home() {
               role: "Consultant",
               company: "Freenome",
               period: "2020 (COVID)",
-              highlight: "ML Platform work at an AI genomics startup focused on early cancer detection.",
+              highlight: "Technical recruiting for the ML Platform team at an AI genomics startup focused on early cancer detection.",
               details:
-                "AI genomics startup focused on early cancer detection through blood-based multi-omics. I was embedded on the ML Platform team. Work paused when COVID shut down wet-lab operations and reshuffled priorities across the company.",
+                "AI genomics startup focused on early cancer detection through blood-based multi-omics. Embedded as a technical recruiter supporting the ML Platform team. Engagement paused when COVID shut down wet-lab operations and reshuffled hiring priorities across the company.",
               highlights: [
-                "Built ingestion and featurization pipelines for petabyte-scale genomic datasets",
-                "Contributed to an internal ML experimentation platform so computational researchers could train models without hand-rolling infrastructure",
+                "Sourced and screened ML infrastructure and platform engineers for a team building petabyte-scale genomic data pipelines",
+                "Partnered directly with hiring managers on role scoping, calibration, and candidate close",
                 "Context: $238M Series B at the time. Team working across ML and cancer biology",
               ],
             },

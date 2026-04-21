@@ -50,7 +50,7 @@ Mobile: React Native (via Expo).
 - 2023–2026: Strategy & Partnerships at Children's Cup (nonprofit operating CarePoints across 6 countries, scaled programs touching 16,600+ children across 61 CarePoints)
 - 2020–2024: Creative + Next Gen at Our Savior's Church (15,000-member multi-site church across 7 South Louisiana campuses)
 - 2020: Consultant at Ejento (technical recruiting for venture-backed startups: SpaceX, Scale AI, Cruise, GitLab, Skydio)
-- 2020: Consultant at Freenome ($238M Series B genomics startup, ML Platform team)
+- 2020: Consultant at Freenome (technical recruiting for the ML Platform team at a $238M Series B AI genomics startup)
 - 2018–2020: Technical Recruiter and Technical PM at Tempo Automation (closed 42 P0/P1 roles; PCB assembly production for NASA, SpaceX, Blue Origin, Raytheon, Lockheed Martin, Tesla, Zoox)
 
 ## Contact
